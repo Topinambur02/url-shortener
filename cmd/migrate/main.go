@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/golang-migrate/migrate"
+	_ "github.com/golang-migrate/migrate/source/file"
 	"github.com/golang-migrate/migrate/database/postgres"
 	"github.com/topinambur02/url-shortener/internal/config"
 	"github.com/topinambur02/url-shortener/internal/db"
