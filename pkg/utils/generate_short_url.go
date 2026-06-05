@@ -1,6 +1,6 @@
 package utils
 
-import "crypto/sha256"
+import "hash/fnv"
 
 const (
 	alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"
@@ -8,14 +8,16 @@ const (
 )
 
 func GenerateShortUrl(originalUrl string) string {
-	hash := sha256.Sum256([]byte(originalUrl))
-	var result []byte
-	base := len(alphabet)
+	h := fnv.New64a()
+	h.Write([]byte(originalUrl))
+	hashValue := h.Sum64()
+	var result [length]byte
+	base := uint64(len(alphabet))
 
 	for i := range length {
-		idx := int(hash[i]) % base
-		result = append(result, alphabet[idx])
+		result[i] = alphabet[hashValue%base]
+		hashValue /= base
 	}
 
-	return string(result)
+	return string(result[:])
 }
