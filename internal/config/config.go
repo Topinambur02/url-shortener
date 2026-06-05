@@ -19,7 +19,7 @@ type Config struct {
 		Port     string `env:"DB_PORT" env-default:"5432" yaml:"port"`
 		User     string `env:"DB_USER" env-default:"postgres" yaml:"user"`
 		Password string `env:"DB_PASS" env-default:"postgres" yaml:"pass"`
-		Name     string `env:"DB_NAME" env-default:"meeting_room_booking_service_db" yaml:"name"`
+		Name     string `env:"DB_NAME" env-default:"url_shortener_db" yaml:"name"`
 	} `yaml:"db"`
 
 	DSN string

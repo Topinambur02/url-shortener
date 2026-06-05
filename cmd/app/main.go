@@ -10,6 +10,10 @@ import (
 
 	"github.com/topinambur02/url-shortener/internal/config"
 	"github.com/topinambur02/url-shortener/internal/db"
+	"github.com/topinambur02/url-shortener/internal/handler"
+	"github.com/topinambur02/url-shortener/internal/repository"
+	"github.com/topinambur02/url-shortener/internal/repository/postgres"
+	"github.com/topinambur02/url-shortener/internal/service"
 	"github.com/topinambur02/url-shortener/pkg/shutdown"
 )
 
@@ -25,19 +29,29 @@ func main() {
 	}
 
 	storage_type := cfg.App.StorageType
+	var repo repository.UrlRepository
 
 	if storage_type == "postgres" {
 		log.Println("Initializing database...")
-		_, err = db.InitDB(cfg)
+		database, err := db.InitDB(cfg)
 
 		if err != nil {
 			log.Fatalf("Error initializing database: %v", err)
 		} else {
 			log.Println("Database initialized successfully")
 		}
+
+		repo = postgres.NewUrlRepository(database)
 	} else {
 		// TODO: Add in-memory storage
 	}
+
+	s := service.NewUrlService(repo)
+	h := handler.NewURLHandler(s)
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("POST /api", h.Create)
+	mux.HandleFunc("GET /api/{short}", h.GetByShortUrl)
 
 	host := cfg.App.Host
 	port := strconv.Itoa(cfg.App.Port)
@@ -46,6 +60,7 @@ func main() {
 	server := &http.Server{
 		Addr:              address,
 		ReadHeaderTimeout: 10 * time.Second,
+		Handler: mux,
 	}
 
 	go func() {
