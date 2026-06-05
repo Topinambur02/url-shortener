@@ -25,8 +25,8 @@ func (r *UrlRepositoryImpl) GetByShortUrl(ctx context.Context, shortUrl string) 
 
 	url, exists := r.data[shortUrl]
 	if !exists {
-        return nil, exceptions.ErrNotFound
-    }
+		return nil, exceptions.ErrNotFound
+	}
 
 	return &url, nil
 }
@@ -36,8 +36,8 @@ func (r *UrlRepositoryImpl) Create(ctx context.Context, url model.Url) (*model.U
 	defer r.mu.Unlock()
 
 	if _, exists := r.data[url.ShortUrl]; exists {
-        return nil, exceptions.ErrConflict
-    }
+		return nil, exceptions.ErrConflict
+	}
 
 	r.data[url.ShortUrl] = url
 

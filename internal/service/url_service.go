@@ -41,8 +41,8 @@ func (s *UrlServiceImpl) Create(ctx context.Context, createUrlDto *dto.CreateUrl
 
 	url := model.Url{
 		OriginalUrl: originalUrl,
-		ShortUrl: shortURL,
-		UrlHash: url_hash,
+		ShortUrl:    shortURL,
+		UrlHash:     url_hash,
 	}
 
 	createdUrl, err := s.urlRepo.Create(ctx, url)

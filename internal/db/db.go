@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"fmt"
+
 	_ "github.com/lib/pq"
 
 	"github.com/topinambur02/url-shortener/internal/config"
