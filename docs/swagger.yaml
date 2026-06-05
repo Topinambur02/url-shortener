@@ -1,0 +1,93 @@
+basePath: /api
+definitions:
+  dto.CreateUrlDto:
+    properties:
+      original_url:
+        type: string
+    type: object
+  dto.OriginalUrlDto:
+    properties:
+      original_url:
+        type: string
+    type: object
+  dto.ShortUrlDto:
+    properties:
+      short_url:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: Сервис сокращения ссылок
+  title: URL shortener (Test Task)
+  version: 1.0.0
+paths:
+  /:
+    post:
+      consumes:
+      - application/json
+      description: Принимает оригинальный URL в теле запроса и генерирует для него
+        короткий код.
+      parameters:
+      - description: Данные для создания ссылки
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateUrlDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.ShortUrlDto'
+        "400":
+          description: invalid request
+          schema:
+            type: string
+        "500":
+          description: internal error
+          schema:
+            type: string
+      summary: Создать короткую ссылку
+      tags:
+      - urls
+  /{short}:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает оригинальный URL по его 10-символьному короткому коду.
+      parameters:
+      - description: Короткий код (10 символов)
+        in: path
+        maxLength: 10
+        minLength: 10
+        name: short
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.OriginalUrlDto'
+        "400":
+          description: invalid short url length
+          schema:
+            type: string
+        "404":
+          description: not found
+          schema:
+            type: string
+        "500":
+          description: internal error
+          schema:
+            type: string
+      summary: Получить оригинальный URL
+      tags:
+      - urls
+schemes:
+- http
+swagger: "2.0"
