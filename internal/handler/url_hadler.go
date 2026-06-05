@@ -4,11 +4,14 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/topinambur02/url-shortener/internal/dto"
 	"github.com/topinambur02/url-shortener/internal/service"
 	"github.com/topinambur02/url-shortener/pkg/exceptions"
 	"github.com/topinambur02/url-shortener/pkg/logging"
 )
+
+var validate = validator.New()
 
 type URLHandler struct {
 	s service.UrlService
@@ -73,31 +76,30 @@ func (h *URLHandler) GetByShortUrl(w http.ResponseWriter, r *http.Request) {
 // @Router       / [post]
 func (h *URLHandler) Create(w http.ResponseWriter, r *http.Request) {
 	logger := logging.GetLogger()
-    var createUrlDto dto.CreateUrlDto
+	var createUrlDto dto.CreateUrlDto
 
-    if err := json.NewDecoder(r.Body).Decode(&createUrlDto); err != nil {
-        logger.Infof("Error decoding request body: %v", err)
-        http.Error(w, "invalid request", http.StatusBadRequest)
-        return
-    }
+	if err := json.NewDecoder(r.Body).Decode(&createUrlDto); err != nil {
+		logger.Infof("Error decoding request body: %v", err)
+		http.Error(w, "invalid request", http.StatusBadRequest)
+		return
+	}
 
-    if createUrlDto.OriginalUrl == "" {
-        logger.Infoln("error: empty field OriginalUrl")
-        http.Error(w, "invalid request", http.StatusBadRequest)
-        return
-    }
+	if err := validate.Struct(createUrlDto); err != nil {
+		http.Error(w, "Validation failed: "+err.Error(), http.StatusBadRequest)
+		return
+	}
 
-    shortUrlDto, err := h.s.Create(r.Context(), &createUrlDto)
+	shortUrlDto, err := h.s.Create(r.Context(), &createUrlDto)
 
-    if err != nil {
-        logger.Infof("Internal error while creating short link for %s: %v", createUrlDto.OriginalUrl, err)
-        http.Error(w, "internal error", http.StatusInternalServerError)
-        return
-    }
-
-    w.Header().Set("Content-Type", "application/json")
-    if err := json.NewEncoder(w).Encode(shortUrlDto); err != nil {
-        logger.Infof("JSON response encoding error: %v", err)
-        return
-    }
+	if err != nil {
+		logger.Infof("Internal error while creating short link for %s: %v", createUrlDto.OriginalUrl, err)
+		http.Error(w, "internal error", http.StatusInternalServerError)
+		return
+	}
+	
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(shortUrlDto); err != nil {
+		logger.Infof("JSON response encoding error: %v", err)
+		return
+	}
 }
