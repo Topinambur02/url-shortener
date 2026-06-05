@@ -17,8 +17,17 @@ import (
 	"github.com/topinambur02/url-shortener/internal/repository/postgres"
 	"github.com/topinambur02/url-shortener/internal/service"
 	"github.com/topinambur02/url-shortener/pkg/shutdown"
+
+	_ "github.com/topinambur02/url-shortener/docs"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
+// @title           URL shortener (Test Task)
+// @version         1.0.0
+// @description     Сервис сокращения ссылок
+// @host            localhost:8080
+// @BasePath        /api
+// @schemes         http
 func main() {
 	storageFlag := flag.String("storage", "", "Тип хранилища: postgres или inmemory")
 	flag.Parse()
@@ -62,7 +71,9 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /api", h.Create)
+	mux.HandleFunc("POST /api/{$}", h.Create)
 	mux.HandleFunc("GET /api/{short}", h.GetByShortUrl)
+	mux.Handle("/docs/", httpSwagger.WrapHandler)
 
 	host := cfg.App.Host
 	port := strconv.Itoa(cfg.App.Port)

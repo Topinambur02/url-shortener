@@ -18,6 +18,18 @@ func NewURLHandler(s service.UrlService) *URLHandler {
 	return &URLHandler{s: s}
 }
 
+// GetByShortUrl godoc
+// @Summary      Получить оригинальный URL
+// @Description  Возвращает оригинальный URL по его 10-символьному короткому коду.
+// @Tags         urls
+// @Accept       json
+// @Produce      json
+// @Param        short   path      string  true  "Короткий код (10 символов)" minlength(10) maxlength(10)
+// @Success      200     {object}  dto.OriginalUrlDto
+// @Failure      400     {string}  string  "invalid short url length"
+// @Failure      404     {string}  string  "not found"
+// @Failure      500     {string}  string  "internal error"
+// @Router       /{short} [get]
 func (h *URLHandler) GetByShortUrl(w http.ResponseWriter, r *http.Request) {
 	shortURL := r.PathValue("short")
 
@@ -44,6 +56,17 @@ func (h *URLHandler) GetByShortUrl(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Create godoc
+// @Summary      Создать короткую ссылку
+// @Description  Принимает оригинальный URL в теле запроса и генерирует для него короткий код.
+// @Tags         urls
+// @Accept       json
+// @Produce      json
+// @Param        request body      dto.CreateUrlDto  true  "Данные для создания ссылки"
+// @Success      200     {object}  dto.ShortUrlDto
+// @Failure      400     {string}  string  "invalid request"
+// @Failure      500     {string}  string  "internal error"
+// @Router       / [post]
 func (h *URLHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var createUrlDto dto.CreateUrlDto
 
