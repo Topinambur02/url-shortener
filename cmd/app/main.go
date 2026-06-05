@@ -20,6 +20,8 @@ import (
 
 	_ "github.com/topinambur02/url-shortener/docs"
 	httpSwagger "github.com/swaggo/http-swagger"
+
+	"github.com/rs/cors"
 )
 
 // @title           URL shortener (Test Task)
@@ -75,6 +77,15 @@ func main() {
 	mux.HandleFunc("GET /api/{short}", h.GetByShortUrl)
 	mux.Handle("/docs/", httpSwagger.WrapHandler)
 
+	c := cors.New(cors.Options{
+        AllowedOrigins:   []string{"*"},
+        AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodOptions},
+        AllowedHeaders:   []string{"Content-Type", "Authorization"},
+        AllowCredentials: true,
+    })
+
+	corsHandler := c.Handler(mux)
+
 	host := cfg.App.Host
 	port := strconv.Itoa(cfg.App.Port)
 	address := host + ":" + port
@@ -82,7 +93,7 @@ func main() {
 	server := &http.Server{
 		Addr:              address,
 		ReadHeaderTimeout: 10 * time.Second,
-		Handler:           mux,
+		Handler:           corsHandler,
 	}
 
 	go func() {
