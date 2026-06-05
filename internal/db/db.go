@@ -1,25 +1,25 @@
 package db
 
 import (
-	"database/sql"
+	"context"
 	"fmt"
 
-	_ "github.com/lib/pq"
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/topinambur02/url-shortener/internal/config"
 )
 
-func InitDB(cfg *config.Config) (*sql.DB, error) {
+func InitDB(ctx context.Context, cfg *config.Config) (*pgxpool.Pool, error) {
 	dsn := cfg.DSN
-	db, err := sql.Open("postgres", dsn)
+	pool, err := pgxpool.New(ctx, dsn)
 
 	if err != nil {
-		return nil, err
-	}
+        return nil, fmt.Errorf("unable to create connection pool: %w", err)
+    }
 
-	if err := db.Ping(); err != nil {
+	if err := pool.Ping(ctx); err != nil {
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
 
-	return db, nil
+	return pool, nil
 }

@@ -1,12 +1,14 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"os"
 
 	"github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/database/postgres"
+	pgxMigrate "github.com/golang-migrate/migrate/v4/database/pgx/v5"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/jackc/pgx/v5/stdlib"
 
 	"github.com/topinambur02/url-shortener/internal/config"
 	"github.com/topinambur02/url-shortener/internal/db"
@@ -22,17 +24,21 @@ func main() {
 	cfg, err := config.LoadConfig(".env")
 	if err != nil {
 		logger.Errorf("Failed to load config from .env: %v\n", err)
+		return
 	}
 	logger.Info("Configuration loaded successfully")
 
 	logger.Info("Initializing database connection...")
-	database, err := db.InitDB(cfg)
+	ctx := context.Background()
+	database, err := db.InitDB(ctx, cfg)
 	if err != nil {
 		logger.Errorf("Database initialization failed: %v\n", err)
+		return
 	}
 
 	logger.Info("Creating database driver instance for postgres...")
-	driver, err := postgres.WithInstance(database, &postgres.Config{})
+	sqlDB := stdlib.OpenDBFromPool(database)
+	driver, err := pgxMigrate.WithInstance(sqlDB, &pgxMigrate.Config{})
 	if err != nil {
 		logger.Errorf("Failed to create postgres driver instance: %v\n", err)
 	}
@@ -84,5 +90,5 @@ func main() {
 		logger.Errorf("Unknown migration command '%s'. Allowed commands are 'up' or 'down'\n", cmd)
 	}
 
-	logger.Info("INFO: Migration process finished successfully")
+	logger.Info("Migration process finished successfully")
 }

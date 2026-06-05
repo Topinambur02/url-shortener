@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"net/http"
 	"os"
@@ -55,12 +56,13 @@ func main() {
 	}
 	logger.Infof("Resolved target storage type: '%s'", storageType)
 
+	ctx := context.Background()
 	var repo repository.UrlRepository
 
 	switch storageType {
 	case "postgres":
 		logger.Info("Starting Postgres database initialization...")
-		database, err := db.InitDB(cfg)
+		database, err := db.InitDB(ctx, cfg)
 		if err != nil {
 			logger.Fatalf("FATAL: Database initialization failed: %v", err)
 		}
