@@ -11,7 +11,7 @@ type Config struct {
 	App struct {
 		Host        string `env:"HOST" env-default:"localhost" yaml:"host"`
 		Port        int    `env:"PORT" env-default:"8080" yaml:"port"`
-		StorageType string `env:"STORAGE_TYPE" env-default:"postgres" yaml:"storage_type"`
+		StorageType string `env:"STORAGE_TYPE" env-default:"inmemory" yaml:"storage_type"`
 	} `yaml:"app"`
 
 	DB struct {
