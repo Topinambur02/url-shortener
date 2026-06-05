@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"net/http"
 	"os"
@@ -12,12 +13,15 @@ import (
 	"github.com/topinambur02/url-shortener/internal/db"
 	"github.com/topinambur02/url-shortener/internal/handler"
 	"github.com/topinambur02/url-shortener/internal/repository"
+	inmemory "github.com/topinambur02/url-shortener/internal/repository/in-memory"
 	"github.com/topinambur02/url-shortener/internal/repository/postgres"
 	"github.com/topinambur02/url-shortener/internal/service"
 	"github.com/topinambur02/url-shortener/pkg/shutdown"
 )
 
 func main() {
+	storageFlag := flag.String("storage", "", "Тип хранилища: postgres или inmemory")
+	flag.Parse()
 	log.Println("Starting application...")
 
 	cfg, err := config.LoadConfig(".env")
@@ -28,10 +32,14 @@ func main() {
 		log.Print("Default configuration loaded successfully")
 	}
 
-	storage_type := cfg.App.StorageType
+	storageType := *storageFlag
+	if storageType == "" {
+		storageType = cfg.App.StorageType
+	}
+
 	var repo repository.UrlRepository
 
-	if storage_type == "postgres" {
+	if storageType == "postgres" {
 		log.Println("Initializing database...")
 		database, err := db.InitDB(cfg)
 
@@ -42,8 +50,11 @@ func main() {
 		}
 
 		repo = postgres.NewUrlRepository(database)
+	} else if storageType == "inmemory" {
+		log.Println("Initializing in-memory storage...")
+		repo = inmemory.NewUrlRepository()
 	} else {
-		// TODO: Add in-memory storage
+		log.Fatalf("Unknown storage type: %s. Use 'postgres' or 'inmemory'", storageType)
 	}
 
 	s := service.NewUrlService(repo)
