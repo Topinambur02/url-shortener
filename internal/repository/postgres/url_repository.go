@@ -21,10 +21,10 @@ func NewUrlRepository(db *sql.DB) repository.UrlRepository {
 
 func (r *UrlRepositoryImpl) GetByShortUrl(ctx context.Context, short_url string) (*model.Url, error) {
 	var url model.Url
-	err := r.db.QueryRowContext(ctx, 
-        "SELECT id, short_url, original_url, url_hash FROM urls WHERE short_url = $1", 
-        short_url,
-    ).Scan(&url.ID, &url.ShortUrl, &url.OriginalUrl, &url.UrlHash)
+	err := r.db.QueryRowContext(ctx,
+		"SELECT id, short_url, original_url, url_hash FROM urls WHERE short_url = $1",
+		short_url,
+	).Scan(&url.ID, &url.ShortUrl, &url.OriginalUrl, &url.UrlHash)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, err

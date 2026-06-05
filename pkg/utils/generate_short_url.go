@@ -16,6 +16,6 @@ func GenerateShortUrl(originalUrl string) string {
 		idx := int(hash[i]) % base
 		result = append(result, alphabet[idx])
 	}
-	
+
 	return string(result)
 }
