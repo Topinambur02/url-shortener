@@ -9,6 +9,7 @@ import (
 	"github.com/topinambur02/url-shortener/pkg/utils"
 )
 
+//go:generate mockery --name UrlService --output ./mocks --case underscore
 type UrlService interface {
 	GetByShortUrl(ctx context.Context, shortUrl string) (*dto.OriginalUrlDto, error)
 	Create(ctx context.Context, createUrlDto *dto.CreateUrlDto) (*dto.ShortUrlDto, error)
