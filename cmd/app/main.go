@@ -9,10 +9,13 @@ import (
 	"time"
 
 	"github.com/topinambur02/url-shortener/internal/config"
+	"github.com/topinambur02/url-shortener/internal/db"
 	"github.com/topinambur02/url-shortener/pkg/shutdown"
 )
 
 func main() {
+	log.Println("Starting application...")
+
 	cfg, err := config.LoadConfig(".env")
 
 	if err != nil {
@@ -21,11 +24,24 @@ func main() {
 		log.Print("Default configuration loaded successfully")
 	}
 
+	storage_type := cfg.App.StorageType
+
+	if storage_type == "postgres" {
+		log.Println("Initializing database...")
+		_, err = db.InitDB(cfg)
+
+		if err != nil {
+			log.Fatalf("Error initializing database: %v", err)
+		} else {
+			log.Println("Database initialized successfully")
+		}
+	} else {
+		// TODO: Add in-memory storage
+	}
+
 	host := cfg.App.Host
 	port := strconv.Itoa(cfg.App.Port)
 	address := host + ":" + port
-
-	log.Printf("Server will listen on %s", address)
 
 	server := &http.Server{
 		Addr:              address,
@@ -43,4 +59,3 @@ func main() {
 	shutdown.GracefulShutdown([]os.Signal{syscall.SIGABRT, syscall.SIGQUIT, syscall.SIGHUP, os.Interrupt, syscall.SIGTERM}, server.Shutdown)
 	log.Println("Server exited gracefully")
 }
-
