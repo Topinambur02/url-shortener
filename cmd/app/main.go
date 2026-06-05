@@ -39,21 +39,21 @@ func main() {
 
 	var repo repository.UrlRepository
 
-	if storageType == "postgres" {
+	switch storageType {
+	case "postgres":
 		log.Println("Initializing database...")
 		database, err := db.InitDB(cfg)
-
 		if err != nil {
 			log.Fatalf("Error initializing database: %v", err)
-		} else {
-			log.Println("Database initialized successfully")
 		}
-
 		repo = postgres.NewUrlRepository(database)
-	} else if storageType == "inmemory" {
+		log.Println("Database initialized successfully")
+
+	case "inmemory":
 		log.Println("Initializing in-memory storage...")
 		repo = inmemory.NewUrlRepository()
-	} else {
+
+	default:
 		log.Fatalf("Unknown storage type: %s. Use 'postgres' or 'inmemory'", storageType)
 	}
 
@@ -71,7 +71,7 @@ func main() {
 	server := &http.Server{
 		Addr:              address,
 		ReadHeaderTimeout: 10 * time.Second,
-		Handler: mux,
+		Handler:           mux,
 	}
 
 	go func() {
@@ -82,6 +82,9 @@ func main() {
 	}()
 
 	log.Println("Setting up graceful shutdown")
-	shutdown.GracefulShutdown([]os.Signal{syscall.SIGABRT, syscall.SIGQUIT, syscall.SIGHUP, os.Interrupt, syscall.SIGTERM}, server.Shutdown)
+	err = shutdown.GracefulShutdown([]os.Signal{syscall.SIGABRT, syscall.SIGQUIT, syscall.SIGHUP, os.Interrupt, syscall.SIGTERM}, server.Shutdown)
+	if err != nil {
+		log.Fatalf("Shutdown error: %v", err)
+	}
 	log.Println("Server exited gracefully")
 }

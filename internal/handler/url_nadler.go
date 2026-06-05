@@ -39,7 +39,9 @@ func (h *URLHandler) GetByShortUrl(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(originalUrlDto)
+	if err := json.NewEncoder(w).Encode(originalUrlDto); err != nil {
+		log.Printf("error encoding response: %v", err)
+	}
 }
 
 func (h *URLHandler) Create(w http.ResponseWriter, r *http.Request) {
@@ -59,5 +61,7 @@ func (h *URLHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(shortUrlDto)
+	if err := json.NewEncoder(w).Encode(shortUrlDto); err != nil {
+		log.Printf("error encoding response: %v", err)
+	}
 }

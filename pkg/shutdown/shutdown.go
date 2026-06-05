@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func GracefulShutdown(signals []os.Signal, shutdown func(context.Context) error, closers ...io.Closer) {
+func GracefulShutdown(signals []os.Signal, shutdown func(context.Context) error, closers ...io.Closer) error {
 	sigc := make(chan os.Signal, 1)
 	signal.Notify(sigc, signals...)
 	<-sigc
@@ -19,12 +19,14 @@ func GracefulShutdown(signals []os.Signal, shutdown func(context.Context) error,
 	defer cancel()
 
 	if err := shutdown(ctx); err != nil {
-		log.Fatalf("Shutdown error: %v", err)
+		return err
 	}
 
 	for _, c := range closers {
 		if err := c.Close(); err != nil {
-			log.Fatalf("Failed to close %v: %v", c, err)
+			return err
 		}
 	}
+
+	return nil
 }
