@@ -3,17 +3,19 @@ package shutdown
 import (
 	"context"
 	"io"
-	"log"
 	"os"
 	"os/signal"
 	"time"
+
+	"github.com/topinambur02/url-shortener/pkg/logging"
 )
 
 func GracefulShutdown(signals []os.Signal, shutdown func(context.Context) error, closers ...io.Closer) error {
+	logger := logging.GetLogger()
 	sigc := make(chan os.Signal, 1)
 	signal.Notify(sigc, signals...)
 	<-sigc
-	log.Print("Caught signal. Shutting down...")
+	logger.Info("Caught signal. Shutting down...")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

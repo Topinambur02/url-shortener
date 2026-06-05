@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"log"
 	"os"
 
 	"github.com/golang-migrate/migrate/v4"
@@ -11,58 +10,79 @@ import (
 
 	"github.com/topinambur02/url-shortener/internal/config"
 	"github.com/topinambur02/url-shortener/internal/db"
+	"github.com/topinambur02/url-shortener/pkg/logging"
 )
 
 func main() {
+	logging.Init()
+	logger := logging.GetLogger()
+	logger.Info("Starting database migration process...")
+
+	logger.Info("Loading configuration file...")
 	cfg, err := config.LoadConfig(".env")
-
 	if err != nil {
-		log.Fatalln("ERROR: No .env file found")
+		logger.Errorf("Failed to load config from .env: %v\n", err)
 	}
+	logger.Info("Configuration loaded successfully")
 
-	log.Println("Starting database migration process")
-
+	logger.Info("Initializing database connection...")
 	database, err := db.InitDB(cfg)
-
 	if err != nil {
-		log.Fatalf("ERROR: Database not initialized with error: %v", err)
+		logger.Errorf("Database initialization failed: %v\n", err)
 	}
 
-	if err != nil {
-		log.Fatalln("Error getting sql db")
-	}
-
+	logger.Info("Creating database driver instance for postgres...")
 	driver, err := postgres.WithInstance(database, &postgres.Config{})
-
 	if err != nil {
-		log.Fatalln(err)
+		logger.Errorf("Failed to create postgres driver instance: %v\n", err)
 	}
+	logger.Info("Database driver instance created successfully")
 
-	log.Println("Database connection established successfully")
-
+	logger.Info("Initializing migrate instance with source 'file://migrations'...")
 	m, err := migrate.NewWithDatabaseInstance(
 		"file://migrations",
 		"postgres",
 		driver,
 	)
-
 	if err != nil {
-		log.Fatal(err)
+		logger.Errorf("Failed to initialize migrate instance: %v\n", err)
+	}
+
+	if len(os.Args) < 2 {
+		logger.Errorln("Missing command argument. Please specify 'up' or 'down'")
 	}
 
 	cmd := os.Args[len(os.Args)-1]
+	logger.Printf("Detected migration command: '%s'\n", cmd)
 
-	if cmd == "up" {
-		if err := m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
-			log.Fatalf("Migration up failed: %v", err)
+	switch cmd {
+	case "up":
+		logger.Info("Executing 'up' migrations...")
+		if err := m.Up(); err != nil {
+			if errors.Is(err, migrate.ErrNoChange) {
+				logger.Info("No migration changes to apply. Schema is already up to date.")
+			} else {
+				logger.Errorf("Migration 'up' failed: %v\n", err)
+			}
+		} else {
+			logger.Info("Migration 'up' completed successfully")
 		}
-		log.Println("Migration up completed successfully")
+
+	case "down":
+		logger.Info("Executing 'down' migrations...")
+		if err := m.Down(); err != nil {
+			if errors.Is(err, migrate.ErrNoChange) {
+				logger.Info("No migration changes to revert. Database is already at the base state.")
+			} else {
+				logger.Errorf("Migration 'down' failed: %v\n", err)
+			}
+		} else {
+			logger.Info("Migration 'down' completed successfully")
+		}
+
+	default:
+		logger.Errorf("Unknown migration command '%s'. Allowed commands are 'up' or 'down'\n", cmd)
 	}
 
-	if cmd == "down" {
-		if err := m.Down(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
-			log.Fatalf("Migration down failed: %v", err)
-		}
-		log.Println("Migration down completed successfully")
-	}
+	logger.Info("INFO: Migration process finished successfully")
 }

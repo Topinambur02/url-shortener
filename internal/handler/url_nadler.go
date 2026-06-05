@@ -2,12 +2,12 @@ package handler
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 
 	"github.com/topinambur02/url-shortener/internal/dto"
 	"github.com/topinambur02/url-shortener/internal/service"
 	"github.com/topinambur02/url-shortener/pkg/exceptions"
+	"github.com/topinambur02/url-shortener/pkg/logging"
 )
 
 type URLHandler struct {
@@ -31,9 +31,11 @@ func NewURLHandler(s service.UrlService) *URLHandler {
 // @Failure      500     {string}  string  "internal error"
 // @Router       /{short} [get]
 func (h *URLHandler) GetByShortUrl(w http.ResponseWriter, r *http.Request) {
+	logger := logging.GetLogger()
 	shortURL := r.PathValue("short")
 
 	if len(shortURL) != 10 {
+		logger.Infof("Error: Invalid shortURL length (%d characters): %s", len(shortURL), shortURL)
 		http.Error(w, "invalid short url length", http.StatusBadRequest)
 		return
 	}
@@ -42,17 +44,19 @@ func (h *URLHandler) GetByShortUrl(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		if err == exceptions.ErrNotFound {
+			logger.Infof("URL not found in database: %s", shortURL)
 			http.Error(w, "not found", http.StatusNotFound)
 			return
 		}
+		logger.Infof("Internal error while searching %s: %v", shortURL, err)
 		http.Error(w, "internal error", http.StatusInternalServerError)
-		log.Fatalln(err)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(originalUrlDto); err != nil {
-		log.Printf("error encoding response: %v", err)
+		logger.Infof("Error encoding JSON response for %s: %v", shortURL, err)
+		return
 	}
 }
 
@@ -68,23 +72,32 @@ func (h *URLHandler) GetByShortUrl(w http.ResponseWriter, r *http.Request) {
 // @Failure      500     {string}  string  "internal error"
 // @Router       / [post]
 func (h *URLHandler) Create(w http.ResponseWriter, r *http.Request) {
-	var createUrlDto dto.CreateUrlDto
+	logger := logging.GetLogger()
+    var createUrlDto dto.CreateUrlDto
 
-	if err := json.NewDecoder(r.Body).Decode(&createUrlDto); err != nil || createUrlDto.OriginalUrl == "" {
-		http.Error(w, "invalid request", http.StatusBadRequest)
-		return
-	}
+    if err := json.NewDecoder(r.Body).Decode(&createUrlDto); err != nil {
+        logger.Infof("Error decoding request body: %v", err)
+        http.Error(w, "invalid request", http.StatusBadRequest)
+        return
+    }
 
-	shortUrlDto, err := h.s.Create(r.Context(), &createUrlDto)
+    if createUrlDto.OriginalUrl == "" {
+        logger.Infoln("error: empty field OriginalUrl")
+        http.Error(w, "invalid request", http.StatusBadRequest)
+        return
+    }
 
-	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
-		log.Fatal(err)
-		return
-	}
+    shortUrlDto, err := h.s.Create(r.Context(), &createUrlDto)
 
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(shortUrlDto); err != nil {
-		log.Printf("error encoding response: %v", err)
-	}
+    if err != nil {
+        logger.Infof("Internal error while creating short link for %s: %v", createUrlDto.OriginalUrl, err)
+        http.Error(w, "internal error", http.StatusInternalServerError)
+        return
+    }
+
+    w.Header().Set("Content-Type", "application/json")
+    if err := json.NewEncoder(w).Encode(shortUrlDto); err != nil {
+        logger.Infof("JSON response encoding error: %v", err)
+        return
+    }
 }
