@@ -5,9 +5,10 @@ import (
 	"log"
 	"os"
 
-	"github.com/golang-migrate/migrate"
-	_ "github.com/golang-migrate/migrate/source/file"
-	"github.com/golang-migrate/migrate/database/postgres"
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/database/postgres"
+    _ "github.com/golang-migrate/migrate/v4/source/file"
+
 	"github.com/topinambur02/url-shortener/internal/config"
 	"github.com/topinambur02/url-shortener/internal/db"
 )
