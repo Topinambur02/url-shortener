@@ -71,12 +71,12 @@ func run(ctx context.Context) error {
 		return fmt.Errorf("initializing repository: %w", err)
 	}
 
-	s := service.NewUrlService(repo)
-	h := handler.NewURLHandler(s)
+	address := net.JoinHostPort(cfg.App.Host, strconv.Itoa(cfg.App.Port))
+	s := service.NewURLService(repo)
+	h := handler.NewURLHandler(s, address)
 
 	handlerStack := setupRouter(h)
 
-	address := net.JoinHostPort(cfg.App.Host, strconv.Itoa(cfg.App.Port))
 	server := &http.Server{
 		Addr:              address,
 		ReadHeaderTimeout: 10 * time.Second,
@@ -111,9 +111,9 @@ func setupRouter(h *handler.URLHandler) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /api", h.Create)
 	mux.HandleFunc("POST /api/{$}", h.Create)
-	mux.HandleFunc("GET /api/{short}", h.GetByShortURL)
+	mux.HandleFunc("GET /{short}", h.GetByShortURL)
 	mux.Handle("/docs/", httpSwagger.WrapHandler)
-	logger.Info("HTTP routes registered: POST /api, GET /api/{short}, GET /docs/")
+	logger.Info("HTTP routes registered: POST /api, GET /{short}, GET /docs/")
 
 	logger.Info("Applying Cross-Origin Resource Sharing (CORS) rules...")
 	c := cors.New(cors.Options{

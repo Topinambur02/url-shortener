@@ -40,22 +40,28 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK",
+                    "201": {
+                        "description": "Created",
                         "schema": {
                             "$ref": "#/definitions/dto.ShortURLDto"
                         }
                     },
                     "400": {
-                        "description": "invalid request",
+                        "description": "Bad Request",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/exceptions.ErrBadRequestResponseDoc"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/exceptions.ErrConflictResponseDoc"
                         }
                     },
                     "500": {
-                        "description": "internal error",
+                        "description": "Internal Server Error",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/exceptions.ErrInternalResponseDoc"
                         }
                     }
                 }
@@ -93,21 +99,21 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "invalid short url length",
+                        "description": "Bad Request",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/exceptions.ErrBadRequestResponseDoc"
                         }
                     },
                     "404": {
-                        "description": "not found",
+                        "description": "Not Found",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/exceptions.ErrNotFoundResponseDoc"
                         }
                     },
                     "500": {
-                        "description": "internal error",
+                        "description": "Internal Server Error",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/exceptions.ErrInternalResponseDoc"
                         }
                     }
                 }
@@ -122,7 +128,8 @@ const docTemplate = `{
             ],
             "properties": {
                 "original_url": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "https://finance.ozon.ru"
                 }
             }
         },
@@ -139,6 +146,58 @@ const docTemplate = `{
             "properties": {
                 "short_url": {
                     "type": "string"
+                }
+            }
+        },
+        "exceptions.ErrBadRequestResponseDoc": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "invalid request"
+                },
+                "status_code": {
+                    "type": "integer",
+                    "example": 400
+                }
+            }
+        },
+        "exceptions.ErrConflictResponseDoc": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "url already exists"
+                },
+                "status_code": {
+                    "type": "integer",
+                    "example": 409
+                }
+            }
+        },
+        "exceptions.ErrInternalResponseDoc": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "internal error"
+                },
+                "status_code": {
+                    "type": "integer",
+                    "example": 500
+                }
+            }
+        },
+        "exceptions.ErrNotFoundResponseDoc": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "url not found"
+                },
+                "status_code": {
+                    "type": "integer",
+                    "example": 404
                 }
             }
         }

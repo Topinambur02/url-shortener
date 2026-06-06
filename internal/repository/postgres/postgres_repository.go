@@ -33,7 +33,7 @@ func NewPostgresRepository(db *pgxpool.Pool) repository.StoreRepository {
 	}
 }
 
-func (r *PostgresRepository) GetByShortUrl(ctx context.Context, shortURL string) (*model.URL, error) {
+func (r *PostgresRepository) GetByShortURL(ctx context.Context, shortURL string) (*model.URL, error) {
 	var url model.URL
 	err := r.db.QueryRow(ctx,
 		"SELECT id, short_url, original_url FROM urls WHERE short_url = $1",

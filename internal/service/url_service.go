@@ -11,22 +11,22 @@ import (
 
 //go:generate mockery --name URLService --output ./mocks --case underscore
 type URLService interface {
-	GetByShortUrl(ctx context.Context, shortUrl string) (*dto.OriginalURLDto, error)
-	Create(ctx context.Context, createUrlDto *dto.CreateURLDto) (*dto.ShortURLDto, error)
+	GetByShortURL(ctx context.Context, shortURL string) (*dto.OriginalURLDto, error)
+	Create(ctx context.Context, createURLDto *dto.CreateURLDto, address string) (*dto.ShortURLDto, error)
 }
 
 type URLServiceImpl struct {
 	repo repository.StoreRepository
 }
 
-func NewUrlService(repo repository.StoreRepository) *URLServiceImpl {
+func NewURLService(repo repository.StoreRepository) *URLServiceImpl {
 	return &URLServiceImpl{
 		repo: repo,
 	}
 }
 
-func (s *URLServiceImpl) GetByShortUrl(ctx context.Context, shortUrl string) (*dto.OriginalURLDto, error) {
-	url, err := s.repo.GetByShortUrl(ctx, shortUrl)
+func (s *URLServiceImpl) GetByShortURL(ctx context.Context, shortURL string) (*dto.OriginalURLDto, error) {
+	url, err := s.repo.GetByShortURL(ctx, shortURL)
 
 	if err != nil {
 		return nil, err
@@ -35,7 +35,7 @@ func (s *URLServiceImpl) GetByShortUrl(ctx context.Context, shortUrl string) (*d
 	return &dto.OriginalURLDto{OriginalURL: url.OriginalURL}, nil
 }
 
-func (s *URLServiceImpl) Create(ctx context.Context, createURLDto *dto.CreateURLDto) (*dto.ShortURLDto, error) {
+func (s *URLServiceImpl) Create(ctx context.Context, createURLDto *dto.CreateURLDto, address string) (*dto.ShortURLDto, error) {
 	originalURL := createURLDto.OriginalURL
 	shortURL := utils.GenerateShortUrl(originalURL)
 
@@ -50,5 +50,7 @@ func (s *URLServiceImpl) Create(ctx context.Context, createURLDto *dto.CreateURL
 		return nil, err
 	}
 
-	return &dto.ShortURLDto{ShortURL: createdURL.ShortURL}, nil
+	link := "http://" + address + "/" + createdURL.ShortURL
+
+	return &dto.ShortURLDto{ShortURL: link}, nil
 }

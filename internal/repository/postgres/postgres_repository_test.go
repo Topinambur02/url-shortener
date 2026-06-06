@@ -74,7 +74,7 @@ func TestUrlRepository_CreateAndGet(t *testing.T) {
 		require.Equal(t, inputURL.OriginalURL, created.OriginalURL)
 	})
 	t.Run("Get Success", func(t *testing.T) {
-		found, err := repo.GetByShortUrl(ctx, inputURL.ShortURL)
+		found, err := repo.GetByShortURL(ctx, inputURL.ShortURL)
 		require.NoError(t, err)
 		require.NotNil(t, found)
 		require.Equal(t, inputURL.OriginalURL, found.OriginalURL)
@@ -82,7 +82,7 @@ func TestUrlRepository_CreateAndGet(t *testing.T) {
 		require.True(t, found.ID > 0)
 	})
 	t.Run("Get NotFound", func(t *testing.T) {
-		found, err := repo.GetByShortUrl(ctx, "not_exists")
+		found, err := repo.GetByShortURL(ctx, "not_exists")
 		require.Nil(t, found)
 		require.ErrorIs(t, err, exceptions.ErrNotFound)
 	})
