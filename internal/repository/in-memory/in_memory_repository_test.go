@@ -63,7 +63,7 @@ func TestInMemoryRepository_GetByShortUrl(t *testing.T) {
 		repo.data[existing.ShortURL] = existing
 		repo.mu.Unlock()
 
-		result, err := repo.GetByShortUrl(ctx, existing.ShortURL)
+		result, err := repo.GetByShortURL(ctx, existing.ShortURL)
 
 		require.NoError(t, err)
 		require.NotNil(t, result)
@@ -73,7 +73,7 @@ func TestInMemoryRepository_GetByShortUrl(t *testing.T) {
 	t.Run("ErrNotFound error if there is no link", func(t *testing.T) {
 		repo := NewInMemoryRepository()
 
-		_, err := repo.GetByShortUrl(ctx, "non-existent-key")
+		_, err := repo.GetByShortURL(ctx, "non-existent-key")
 
 		require.ErrorIs(t, err, exceptions.ErrNotFound)
 	})

@@ -13,7 +13,7 @@ import (
 	"github.com/topinambur02/url-shortener/internal/repository/mocks"
 )
 
-func TestUrlService_GetByShortUrl(t *testing.T) {
+func TestURLService_GetByShortURL(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -27,7 +27,7 @@ func TestUrlService_GetByShortUrl(t *testing.T) {
 			name:     "Success",
 			shortUrl: "abcd123",
 			mockSetup: func(mockRepo *mocks.StoreRepository) {
-				mockRepo.On("GetByShortUrl", mock.Anything, "abcd123").
+				mockRepo.On("GetByShortURL", mock.Anything, "abcd123").
 					Return(&model.URL{OriginalURL: "https://example.com", ShortURL: "abcd123"}, nil).
 					Once()
 			},
@@ -38,7 +38,7 @@ func TestUrlService_GetByShortUrl(t *testing.T) {
 			name:     "Error_NotFound",
 			shortUrl: "notfound",
 			mockSetup: func(mockRepo *mocks.StoreRepository) {
-				mockRepo.On("GetByShortUrl", mock.Anything, "notfound").
+				mockRepo.On("GetByShortURL", mock.Anything, "notfound").
 					Return((*model.URL)(nil), errors.New("url not found")).
 					Once()
 			},
@@ -54,9 +54,9 @@ func TestUrlService_GetByShortUrl(t *testing.T) {
 
 			mockRepo := mocks.NewStoreRepository(t)
 			tt.mockSetup(mockRepo)
-			service := NewUrlService(mockRepo)
+			service := NewURLService(mockRepo)
 
-			res, err := service.GetByShortUrl(context.Background(), tt.shortUrl)
+			res, err := service.GetByShortURL(context.Background(), tt.shortUrl)
 
 			if tt.expectedError != nil {
 				require.Error(t, err)
@@ -70,7 +70,7 @@ func TestUrlService_GetByShortUrl(t *testing.T) {
 	}
 }
 
-func TestUrlService_Create(t *testing.T) {
+func TestURLService_Create(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -93,13 +93,13 @@ func TestUrlService_Create(t *testing.T) {
 					Once()
 			},
 			expectedError: nil,
-			expectedRes:   &dto.ShortURLDto{ShortURL: "genShort123"},
+			expectedRes:   &dto.ShortURLDto{ShortURL: "http://localhost:8080/genShort123"},
 		},
 		{
 			name:      "Error_RepositoryFails",
 			createDto: &dto.CreateURLDto{OriginalURL: "https://broken.com"},
 			mockSetup: func(mockRepo *mocks.StoreRepository) {
-				mockRepo.On("Create", mock.Anything, mock.AnythingOfType("model.Url")).
+				mockRepo.On("Create", mock.Anything, mock.AnythingOfType("model.URL")).
 					Return((*model.URL)(nil), errors.New("db error")).
 					Once()
 			},
@@ -115,9 +115,9 @@ func TestUrlService_Create(t *testing.T) {
 
 			mockRepo := mocks.NewStoreRepository(t)
 			tt.mockSetup(mockRepo)
-			service := NewUrlService(mockRepo)
+			service := NewURLService(mockRepo)
 
-			res, err := service.Create(context.Background(), tt.createDto)
+			res, err := service.Create(context.Background(), tt.createDto, "localhost:8080")
 
 			if tt.expectedError != nil {
 				require.Error(t, err)

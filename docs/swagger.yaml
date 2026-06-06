@@ -3,6 +3,7 @@ definitions:
   dto.CreateURLDto:
     properties:
       original_url:
+        example: https://finance.ozon.ru
         type: string
     required:
     - original_url
@@ -16,6 +17,42 @@ definitions:
     properties:
       short_url:
         type: string
+    type: object
+  exceptions.ErrBadRequestResponseDoc:
+    properties:
+      message:
+        example: invalid request
+        type: string
+      status_code:
+        example: 400
+        type: integer
+    type: object
+  exceptions.ErrConflictResponseDoc:
+    properties:
+      message:
+        example: url already exists
+        type: string
+      status_code:
+        example: 409
+        type: integer
+    type: object
+  exceptions.ErrInternalResponseDoc:
+    properties:
+      message:
+        example: internal error
+        type: string
+      status_code:
+        example: 500
+        type: integer
+    type: object
+  exceptions.ErrNotFoundResponseDoc:
+    properties:
+      message:
+        example: url not found
+        type: string
+      status_code:
+        example: 404
+        type: integer
     type: object
 host: localhost:8080
 info:
@@ -40,18 +77,22 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
+        "201":
+          description: Created
           schema:
             $ref: '#/definitions/dto.ShortURLDto'
         "400":
-          description: invalid request
+          description: Bad Request
           schema:
-            type: string
+            $ref: '#/definitions/exceptions.ErrBadRequestResponseDoc'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/exceptions.ErrConflictResponseDoc'
         "500":
-          description: internal error
+          description: Internal Server Error
           schema:
-            type: string
+            $ref: '#/definitions/exceptions.ErrInternalResponseDoc'
       summary: Создать короткую ссылку
       tags:
       - urls
@@ -76,17 +117,17 @@ paths:
           schema:
             $ref: '#/definitions/dto.OriginalURLDto'
         "400":
-          description: invalid short url length
+          description: Bad Request
           schema:
-            type: string
+            $ref: '#/definitions/exceptions.ErrBadRequestResponseDoc'
         "404":
-          description: not found
+          description: Not Found
           schema:
-            type: string
+            $ref: '#/definitions/exceptions.ErrNotFoundResponseDoc'
         "500":
-          description: internal error
+          description: Internal Server Error
           schema:
-            type: string
+            $ref: '#/definitions/exceptions.ErrInternalResponseDoc'
       summary: Получить оригинальный URL
       tags:
       - urls

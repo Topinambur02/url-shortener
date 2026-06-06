@@ -44,21 +44,21 @@ func (_m *StoreRepository) Create(ctx context.Context, url model.URL) (*model.UR
 	return r0, r1
 }
 
-// GetByShortUrl provides a mock function with given fields: ctx, short_url
-func (_m *StoreRepository) GetByShortUrl(ctx context.Context, short_url string) (*model.URL, error) {
-	ret := _m.Called(ctx, short_url)
+// GetByShortURL provides a mock function with given fields: ctx, shortURL
+func (_m *StoreRepository) GetByShortURL(ctx context.Context, shortURL string) (*model.URL, error) {
+	ret := _m.Called(ctx, shortURL)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetByShortUrl")
+		panic("no return value specified for GetByShortURL")
 	}
 
 	var r0 *model.URL
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, string) (*model.URL, error)); ok {
-		return rf(ctx, short_url)
+		return rf(ctx, shortURL)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, string) *model.URL); ok {
-		r0 = rf(ctx, short_url)
+		r0 = rf(ctx, shortURL)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*model.URL)
@@ -66,7 +66,7 @@ func (_m *StoreRepository) GetByShortUrl(ctx context.Context, short_url string) 
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, short_url)
+		r1 = rf(ctx, shortURL)
 	} else {
 		r1 = ret.Error(1)
 	}

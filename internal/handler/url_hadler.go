@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/go-playground/validator/v10"
@@ -14,11 +15,12 @@ import (
 var validate = validator.New()
 
 type URLHandler struct {
-	s service.URLService
+	s       service.URLService
+	address string
 }
 
-func NewURLHandler(s service.URLService) *URLHandler {
-	return &URLHandler{s: s}
+func NewURLHandler(s service.URLService, address string) *URLHandler {
+	return &URLHandler{s: s, address: address}
 }
 
 // GetByShortUrl godoc
@@ -29,9 +31,9 @@ func NewURLHandler(s service.URLService) *URLHandler {
 // @Produce      json
 // @Param        short   path      string  true  "Короткий код (10 символов)" minlength(10) maxlength(10)
 // @Success      200     {object}  dto.OriginalURLDto
-// @Failure      400     {string}  string  "invalid short url length"
-// @Failure      404     {string}  string  "not found"
-// @Failure      500     {string}  string  "internal error"
+// @Failure      400     {object}  exceptions.ErrBadRequestResponseDoc
+// @Failure      404     {object}  exceptions.ErrNotFoundResponseDoc
+// @Failure      500     {object}  exceptions.ErrInternalResponseDoc
 // @Router       /{short} [get]
 func (h *URLHandler) GetByShortURL(w http.ResponseWriter, r *http.Request) {
 	logger := logging.GetLogger()
@@ -43,7 +45,7 @@ func (h *URLHandler) GetByShortURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	originalUrlDto, err := h.s.GetByShortUrl(r.Context(), shortURL)
+	originalUrlDto, err := h.s.GetByShortURL(r.Context(), shortURL)
 
 	if err != nil {
 		if err == exceptions.ErrNotFound {
@@ -51,6 +53,7 @@ func (h *URLHandler) GetByShortURL(w http.ResponseWriter, r *http.Request) {
 			exceptions.RespondWithError(w, http.StatusNotFound, "not found")
 			return
 		}
+		
 		logger.Infof("Internal error while searching %s: %v", shortURL, err)
 		exceptions.RespondWithError(w, http.StatusInternalServerError, "internal error")
 		return
@@ -70,9 +73,10 @@ func (h *URLHandler) GetByShortURL(w http.ResponseWriter, r *http.Request) {
 // @Accept       json
 // @Produce      json
 // @Param        request body      dto.CreateURLDto  true  "Данные для создания ссылки"
-// @Success      200     {object}  dto.ShortURLDto
-// @Failure      400     {string}  string  "invalid request"
-// @Failure      500     {string}  string  "internal error"
+// @Success      201     {object}  dto.ShortURLDto
+// @Failure      400     {object}  exceptions.ErrBadRequestResponseDoc
+// @Failure		 409	 {object}  exceptions.ErrConflictResponseDoc
+// @Failure      500     {object}  exceptions.ErrInternalResponseDoc
 // @Router       / [post]
 func (h *URLHandler) Create(w http.ResponseWriter, r *http.Request) {
 	logger := logging.GetLogger()
@@ -85,19 +89,26 @@ func (h *URLHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := validate.Struct(createUrlDto); err != nil {
-		exceptions.RespondWithError(w, http.StatusBadRequest, "Validation failed: " + err.Error())
+		exceptions.RespondWithError(w, http.StatusBadRequest, "Validation failed: "+err.Error())
 		return
 	}
 
-	shortUrlDto, err := h.s.Create(r.Context(), &createUrlDto)
+	shortUrlDto, err := h.s.Create(r.Context(), &createUrlDto, h.address)
 
 	if err != nil {
-		logger.Infof("Internal error while creating short link for %s: %v", createUrlDto.OriginalURL, err)
-		exceptions.RespondWithError(w, http.StatusInternalServerError, "internal error")
-		return
-	}
-	
+        if errors.Is(err, exceptions.ErrConflict) {
+            logger.Warnf("Conflict: URL already shortened: %s", createUrlDto.OriginalURL)
+            exceptions.RespondWithError(w, http.StatusConflict, "url already exists")
+            return
+        }
+
+        logger.Errorf("Internal error while creating short link for %s: %v", createUrlDto.OriginalURL, err)
+        exceptions.RespondWithError(w, http.StatusInternalServerError, "internal error")
+        return
+    }
+
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
 	if err := json.NewEncoder(w).Encode(shortUrlDto); err != nil {
 		logger.Infof("JSON response encoding error: %v", err)
 		return
