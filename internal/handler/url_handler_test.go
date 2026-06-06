@@ -43,7 +43,7 @@ func TestUrlHandler(t *testing.T) {
 				shortURL:       "abc",
 				mockBehavior:   func(m *mocks.UrlService) {},
 				expectedStatus: http.StatusBadRequest,
-				expectedBody:   "invalid short url length\n",
+				expectedBody:   "{\"status_code\":400,\"message\":\"invalid short url length\"}\n",
 			},
 			{
 				name:     "Link not found (error 404)",
@@ -53,7 +53,7 @@ func TestUrlHandler(t *testing.T) {
 						Return((*dto.OriginalUrlDto)(nil), exceptions.ErrNotFound)
 				},
 				expectedStatus: http.StatusNotFound,
-				expectedBody:   "not found\n",
+				expectedBody:   "{\"status_code\":404,\"message\":\"not found\"}\n",
 			},
 			{
 				name:     "Internal service error (error 500)",
@@ -63,7 +63,7 @@ func TestUrlHandler(t *testing.T) {
 						Return((*dto.OriginalUrlDto)(nil), errors.New("db connection failure"))
 				},
 				expectedStatus: http.StatusInternalServerError,
-				expectedBody:   "internal error\n",
+				expectedBody:   "{\"status_code\":500,\"message\":\"internal error\"}\n",
 			},
 			{
 				name:     "Successfully retrieved the original URL",

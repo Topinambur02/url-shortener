@@ -39,7 +39,7 @@ func (h *URLHandler) GetByShortUrl(w http.ResponseWriter, r *http.Request) {
 
 	if len(shortURL) != 10 {
 		logger.Infof("Error: Invalid shortURL length (%d characters): %s", len(shortURL), shortURL)
-		http.Error(w, "invalid short url length", http.StatusBadRequest)
+		exceptions.RespondWithError(w, http.StatusBadRequest, "invalid short url length")
 		return
 	}
 
@@ -48,11 +48,11 @@ func (h *URLHandler) GetByShortUrl(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if err == exceptions.ErrNotFound {
 			logger.Infof("URL not found in database: %s", shortURL)
-			http.Error(w, "not found", http.StatusNotFound)
+			exceptions.RespondWithError(w, http.StatusNotFound, "not found")
 			return
 		}
 		logger.Infof("Internal error while searching %s: %v", shortURL, err)
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		exceptions.RespondWithError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 
@@ -80,12 +80,12 @@ func (h *URLHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	if err := json.NewDecoder(r.Body).Decode(&createUrlDto); err != nil {
 		logger.Infof("Error decoding request body: %v", err)
-		http.Error(w, "invalid request", http.StatusBadRequest)
+		exceptions.RespondWithError(w, http.StatusBadRequest, "invalid request")
 		return
 	}
 
 	if err := validate.Struct(createUrlDto); err != nil {
-		http.Error(w, "Validation failed: "+err.Error(), http.StatusBadRequest)
+		exceptions.RespondWithError(w, http.StatusBadRequest, "Validation failed: " + err.Error())
 		return
 	}
 
@@ -93,7 +93,7 @@ func (h *URLHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		logger.Infof("Internal error while creating short link for %s: %v", createUrlDto.OriginalUrl, err)
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		exceptions.RespondWithError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	
