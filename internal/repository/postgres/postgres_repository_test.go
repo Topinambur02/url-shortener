@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
 	tcpostgres "github.com/testcontainers/testcontainers-go/modules/postgres"
@@ -42,8 +41,7 @@ func setupTestDB(t *testing.T) (*pgxpool.Pool, func()) {
 		CREATE TABLE urls (
 			id SERIAL PRIMARY KEY,
 			short_url VARCHAR(255) UNIQUE NOT NULL,
-			original_url TEXT NOT NULL,
-			url_hash VARCHAR(255) NOT NULL
+			original_url TEXT NOT NULL
 		);
 	`)
 	require.NoError(t, err)
@@ -62,31 +60,30 @@ func TestUrlRepository_CreateAndGet(t *testing.T) {
 	pool, cleanup := setupTestDB(t)
 	defer cleanup()
 
-	repo := NewUrlRepository(pool)
+	repo := NewPostgresRepository(pool)
 	ctx := context.Background()
 
-	inputUrl := model.Url{
-		OriginalUrl: "https://example.com",
-		ShortUrl:    "exmpl123",
-		UrlHash:     "hash123",
+	inputURL := model.URL{
+		OriginalURL: "https://example.com",
+		ShortURL:    "exmpl123",
 	}
 	t.Run("Create Success", func(t *testing.T) {
-		created, err := repo.Create(ctx, inputUrl)
-		assert.NoError(t, err)
-		assert.NotNil(t, created)
-		assert.Equal(t, inputUrl.OriginalUrl, created.OriginalUrl)
+		created, err := repo.Create(ctx, inputURL)
+		require.NoError(t, err)
+		require.NotNil(t, created)
+		require.Equal(t, inputURL.OriginalURL, created.OriginalURL)
 	})
 	t.Run("Get Success", func(t *testing.T) {
-		found, err := repo.GetByShortUrl(ctx, inputUrl.ShortUrl)
-		assert.NoError(t, err)
-		assert.NotNil(t, found)
-		assert.Equal(t, inputUrl.OriginalUrl, found.OriginalUrl)
-		assert.Equal(t, inputUrl.ShortUrl, found.ShortUrl)
-		assert.True(t, found.ID > 0)
+		found, err := repo.GetByShortUrl(ctx, inputURL.ShortURL)
+		require.NoError(t, err)
+		require.NotNil(t, found)
+		require.Equal(t, inputURL.OriginalURL, found.OriginalURL)
+		require.Equal(t, inputURL.ShortURL, found.ShortURL)
+		require.True(t, found.ID > 0)
 	})
 	t.Run("Get NotFound", func(t *testing.T) {
 		found, err := repo.GetByShortUrl(ctx, "not_exists")
-		assert.Nil(t, found)
-		assert.ErrorIs(t, err, exceptions.ErrNotFound)
+		require.Nil(t, found)
+		require.ErrorIs(t, err, exceptions.ErrNotFound)
 	})
 }

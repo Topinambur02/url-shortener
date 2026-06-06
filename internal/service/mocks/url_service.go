@@ -15,27 +15,27 @@ type UrlService struct {
 }
 
 // Create provides a mock function with given fields: ctx, createUrlDto
-func (_m *UrlService) Create(ctx context.Context, createUrlDto *dto.CreateUrlDto) (*dto.ShortUrlDto, error) {
+func (_m *UrlService) Create(ctx context.Context, createUrlDto *dto.CreateURLDto) (*dto.ShortURLDto, error) {
 	ret := _m.Called(ctx, createUrlDto)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Create")
 	}
 
-	var r0 *dto.ShortUrlDto
+	var r0 *dto.ShortURLDto
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *dto.CreateUrlDto) (*dto.ShortUrlDto, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *dto.CreateURLDto) (*dto.ShortURLDto, error)); ok {
 		return rf(ctx, createUrlDto)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *dto.CreateUrlDto) *dto.ShortUrlDto); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *dto.CreateURLDto) *dto.ShortURLDto); ok {
 		r0 = rf(ctx, createUrlDto)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*dto.ShortUrlDto)
+			r0 = ret.Get(0).(*dto.ShortURLDto)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *dto.CreateUrlDto) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *dto.CreateURLDto) error); ok {
 		r1 = rf(ctx, createUrlDto)
 	} else {
 		r1 = ret.Error(1)
@@ -45,23 +45,23 @@ func (_m *UrlService) Create(ctx context.Context, createUrlDto *dto.CreateUrlDto
 }
 
 // GetByShortUrl provides a mock function with given fields: ctx, shortUrl
-func (_m *UrlService) GetByShortUrl(ctx context.Context, shortUrl string) (*dto.OriginalUrlDto, error) {
+func (_m *UrlService) GetByShortUrl(ctx context.Context, shortUrl string) (*dto.OriginalURLDto, error) {
 	ret := _m.Called(ctx, shortUrl)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetByShortUrl")
 	}
 
-	var r0 *dto.OriginalUrlDto
+	var r0 *dto.OriginalURLDto
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (*dto.OriginalUrlDto, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*dto.OriginalURLDto, error)); ok {
 		return rf(ctx, shortUrl)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) *dto.OriginalUrlDto); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) *dto.OriginalURLDto); ok {
 		r0 = rf(ctx, shortUrl)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*dto.OriginalUrlDto)
+			r0 = ret.Get(0).(*dto.OriginalURLDto)
 		}
 	}
 

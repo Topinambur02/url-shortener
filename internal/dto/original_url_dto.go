@@ -1,5 +1,5 @@
 package dto
 
-type OriginalUrlDto struct {
-	OriginalUrl string `json:"original_url"`
+type OriginalURLDto struct {
+	OriginalURL string `json:"original_url"`
 }

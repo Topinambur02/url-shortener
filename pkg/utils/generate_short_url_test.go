@@ -3,6 +3,10 @@ package utils
 import (
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+
+	"github.com/topinambur02/url-shortener/pkg/constants"
 )
 
 func TestGenerateShortUrl(t *testing.T) {
@@ -22,20 +26,14 @@ func TestGenerateShortUrl(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got := GenerateShortUrl(tt.input)
 
-			if len(got) != length {
-				t.Errorf("GenerateShortUrl() length = %d, want %d. Got string: %q", len(got), length, got)
-			}
+			require.Len(t, got, constants.Length, "expected length to be %d, got %q", constants.Length, got)
 
 			for _, char := range got {
-				if !strings.ContainsRune(alphabet, char) {
-					t.Errorf("GenerateShortUrl() contains invalid char: %c in string %q", char, got)
-				}
+				require.Truef(t, strings.ContainsRune(constants.Alphabet, char), "GenerateShortUrl() contains invalid char: %c in string %q", char, got)
 			}
 
 			gotSecondTime := GenerateShortUrl(tt.input)
-			if got != gotSecondTime {
-				t.Errorf("GenerateShortUrl() is not deterministic. First: %q, Second: %q", got, gotSecondTime)
-			}
+			require.Equal(t, got, gotSecondTime, "GenerateShortUrl() is not deterministic")
 		})
 	}
 
@@ -46,8 +44,6 @@ func TestGenerateShortUrl(t *testing.T) {
 		hash1 := GenerateShortUrl(url1)
 		hash2 := GenerateShortUrl(url2)
 
-		if hash1 == hash2 {
-			t.Errorf("Collision detected for %q and %q. Both gave %q", url1, url2, hash1)
-		}
+		require.NotEqual(t, hash1, hash2, "Collision detected for %q and %q", url1, url2)
 	})
 }

@@ -35,7 +35,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.CreateUrlDto"
+                            "$ref": "#/definitions/dto.CreateURLDto"
                         }
                     }
                 ],
@@ -43,7 +43,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.ShortUrlDto"
+                            "$ref": "#/definitions/dto.ShortURLDto"
                         }
                     },
                     "400": {
@@ -89,7 +89,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.OriginalUrlDto"
+                            "$ref": "#/definitions/dto.OriginalURLDto"
                         }
                     },
                     "400": {
@@ -115,7 +115,18 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "dto.CreateUrlDto": {
+        "dto.CreateURLDto": {
+            "type": "object",
+            "required": [
+                "original_url"
+            ],
+            "properties": {
+                "original_url": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.OriginalURLDto": {
             "type": "object",
             "properties": {
                 "original_url": {
@@ -123,15 +134,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.OriginalUrlDto": {
-            "type": "object",
-            "properties": {
-                "original_url": {
-                    "type": "string"
-                }
-            }
-        },
-        "dto.ShortUrlDto": {
+        "dto.ShortURLDto": {
             "type": "object",
             "properties": {
                 "short_url": {

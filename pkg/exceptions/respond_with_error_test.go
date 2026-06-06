@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"github.com/topinambur02/url-shortener/internal/dto"
 )
 
@@ -38,28 +39,18 @@ func TestRespondWithError(t *testing.T) {
 
 			RespondWithError(rec, tt.statusCode, tt.message)
 
-			if rec.Code != tt.statusCode {
-				t.Errorf("expected status %d, got %d", tt.statusCode, rec.Code)
-			}
-
-			contentType := rec.Header().Get("Content-Type")
-			if contentType != "application/json" {
-				t.Errorf("expected Content-Type 'application/json', got '%s'", contentType)
-			}
+			require.Equal(t, tt.statusCode, rec.Code, "HTTP status code mismatch")
+			require.Equal(t, "application/json", rec.Header().Get("Content-Type"), "Content-Type header mismatch")
 
 			var actualDto dto.ErrorDto
 			err := json.NewDecoder(rec.Body).Decode(&actualDto)
-			if err != nil {
-				t.Fatalf("failed to decode response body: %v", err)
-			}
+			require.NoError(t, err, "failed to decode response body")
 
-			if actualDto.StatusCode != tt.statusCode {
-				t.Errorf("expected JSON StatusCode %d, got %d", tt.statusCode, actualDto.StatusCode)
+			expectedDto := dto.ErrorDto{
+				StatusCode: tt.statusCode,
+				Message:    tt.message,
 			}
-
-			if actualDto.Message != tt.message {
-				t.Errorf("expected JSON Message %q, got %q", tt.message, actualDto.Message)
-			}
+			require.Equal(t, expectedDto, actualDto, "JSON response body mismatch")
 		})
 	}
 }

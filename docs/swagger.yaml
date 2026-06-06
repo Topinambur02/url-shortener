@@ -1,16 +1,18 @@
 basePath: /api
 definitions:
-  dto.CreateUrlDto:
+  dto.CreateURLDto:
+    properties:
+      original_url:
+        type: string
+    required:
+    - original_url
+    type: object
+  dto.OriginalURLDto:
     properties:
       original_url:
         type: string
     type: object
-  dto.OriginalUrlDto:
-    properties:
-      original_url:
-        type: string
-    type: object
-  dto.ShortUrlDto:
+  dto.ShortURLDto:
     properties:
       short_url:
         type: string
@@ -34,14 +36,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/dto.CreateUrlDto'
+          $ref: '#/definitions/dto.CreateURLDto'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.ShortUrlDto'
+            $ref: '#/definitions/dto.ShortURLDto'
         "400":
           description: invalid request
           schema:
@@ -72,7 +74,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.OriginalUrlDto'
+            $ref: '#/definitions/dto.OriginalURLDto'
         "400":
           description: invalid short url length
           schema:

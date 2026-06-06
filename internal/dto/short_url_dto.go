@@ -1,5 +1,5 @@
 package dto
 
-type ShortUrlDto struct {
-	ShortUrl string `json:"short_url"`
+type ShortURLDto struct {
+	ShortURL string `json:"short_url"`
 }

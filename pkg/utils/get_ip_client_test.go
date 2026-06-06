@@ -3,6 +3,8 @@ package utils
 import (
 	"net/http"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestGetClientIP(t *testing.T) {
@@ -78,9 +80,7 @@ func TestGetClientIP(t *testing.T) {
 			}
 
 			got := GetClientIP(req)
-			if got != tt.want {
-				t.Errorf("GetClientIP() = %q, want %q", got, tt.want)
-			}
+			require.Equal(t, tt.want, got, "GetClientIP() returned unexpected result")
 		})
 	}
 }

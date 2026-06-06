@@ -4,10 +4,12 @@ import (
 	"os"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestConfig(t *testing.T) {
+	t.Parallel()
+
 	t.Run("TestLoadConfigFromFile", func(t *testing.T) {
 		content := `
 app:
@@ -22,26 +24,26 @@ db:
   name: "testdb"
 `
 		tmpFile, err := os.CreateTemp("", "config*.yaml")
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		defer os.Remove(tmpFile.Name())
 
 		_, err = tmpFile.WriteString(content)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		_ = tmpFile.Close()
 
 		cfg, err := LoadConfig(tmpFile.Name())
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
-		assert.Equal(t, "testhost", cfg.App.Host)
-		assert.Equal(t, 9090, cfg.App.Port)
-		assert.Equal(t, "dbhost", cfg.DB.Host)
-		assert.Equal(t, "5433", cfg.DB.Port)
-		assert.Equal(t, "testuser", cfg.DB.User)
-		assert.Equal(t, "testpass", cfg.DB.Password)
-		assert.Equal(t, "testdb", cfg.DB.Name)
+		require.Equal(t, "testhost", cfg.App.Host)
+		require.Equal(t, 9090, cfg.App.Port)
+		require.Equal(t, "dbhost", cfg.DB.Host)
+		require.Equal(t, "5433", cfg.DB.Port)
+		require.Equal(t, "testuser", cfg.DB.User)
+		require.Equal(t, "testpass", cfg.DB.Password)
+		require.Equal(t, "testdb", cfg.DB.Name)
 
 		expectedDSN := "host=dbhost user=testuser password=testpass dbname=testdb port=5433 sslmode=disable"
-		assert.Equal(t, expectedDSN, cfg.DSN)
+		require.Equal(t, expectedDSN, cfg.DSN)
 	})
 	t.Run("TestLoadConfigFromEnvWhenFileMissing", func(t *testing.T) {
 		_ = os.Setenv("HOST", "envhost")
@@ -63,18 +65,18 @@ db:
 		}()
 
 		cfg, err := LoadConfig("nonexistent.yaml")
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
-		assert.Equal(t, "envhost", cfg.App.Host)
-		assert.Equal(t, 9091, cfg.App.Port)
-		assert.Equal(t, "envdbhost", cfg.DB.Host)
-		assert.Equal(t, "5434", cfg.DB.Port)
-		assert.Equal(t, "envuser", cfg.DB.User)
-		assert.Equal(t, "envpass", cfg.DB.Password)
-		assert.Equal(t, "envdb", cfg.DB.Name)
+		require.Equal(t, "envhost", cfg.App.Host)
+		require.Equal(t, 9091, cfg.App.Port)
+		require.Equal(t, "envdbhost", cfg.DB.Host)
+		require.Equal(t, "5434", cfg.DB.Port)
+		require.Equal(t, "envuser", cfg.DB.User)
+		require.Equal(t, "envpass", cfg.DB.Password)
+		require.Equal(t, "envdb", cfg.DB.Name)
 
 		expectedDSN := "host=envdbhost user=envuser password=envpass dbname=envdb port=5434 sslmode=disable"
-		assert.Equal(t, expectedDSN, cfg.DSN)
+		require.Equal(t, expectedDSN, cfg.DSN)
 	})
 	t.Run("TestLoadConfigDefaultsWhenNoFileAndNoEnv", func(t *testing.T) {
 		os.Unsetenv("HOST")
@@ -86,18 +88,18 @@ db:
 		os.Unsetenv("DB_NAME")
 
 		cfg, err := LoadConfig("nonexistent.yaml")
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
-		assert.Equal(t, "localhost", cfg.App.Host)
-		assert.Equal(t, 8080, cfg.App.Port)
-		assert.Equal(t, "localhost", cfg.DB.Host)
-		assert.Equal(t, "5432", cfg.DB.Port)
-		assert.Equal(t, "postgres", cfg.DB.User)
-		assert.Equal(t, "postgres", cfg.DB.Password)
-		assert.Equal(t, "url_shortener_db", cfg.DB.Name)
+		require.Equal(t, "localhost", cfg.App.Host)
+		require.Equal(t, 8080, cfg.App.Port)
+		require.Equal(t, "localhost", cfg.DB.Host)
+		require.Equal(t, "5432", cfg.DB.Port)
+		require.Equal(t, "postgres", cfg.DB.User)
+		require.Equal(t, "postgres", cfg.DB.Password)
+		require.Equal(t, "url_shortener_db", cfg.DB.Name)
 
 		expectedDSN := "host=localhost user=postgres password=postgres dbname=url_shortener_db port=5432 sslmode=disable"
-		assert.Equal(t, expectedDSN, cfg.DSN)
+		require.Equal(t, expectedDSN, cfg.DSN)
 	})
 	t.Run("TestLoadConfigEnvOverridesFile", func(t *testing.T) {
 		content := `
@@ -113,11 +115,11 @@ db:
   name: "filedb"
 `
 		tmpFile, err := os.CreateTemp("", "config*.yaml")
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		defer os.Remove(tmpFile.Name())
 
 		_, err = tmpFile.WriteString(content)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		_ = tmpFile.Close()
 
 		_ = os.Setenv("APP_HOST", "envhost")
@@ -134,51 +136,51 @@ db:
 		}()
 
 		cfg, err := LoadConfig(tmpFile.Name())
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
-		assert.Equal(t, "envhost", cfg.App.Host)
-		assert.Equal(t, 9092, cfg.App.Port)
-		assert.Equal(t, "envdbhost", cfg.DB.Host)
-		assert.Equal(t, "5435", cfg.DB.Port)
-		assert.Equal(t, "fileuser", cfg.DB.User)
-		assert.Equal(t, "envpass", cfg.DB.Password)
-		assert.Equal(t, "filedb", cfg.DB.Name)
+		require.Equal(t, "envhost", cfg.App.Host)
+		require.Equal(t, 9092, cfg.App.Port)
+		require.Equal(t, "envdbhost", cfg.DB.Host)
+		require.Equal(t, "5435", cfg.DB.Port)
+		require.Equal(t, "fileuser", cfg.DB.User)
+		require.Equal(t, "envpass", cfg.DB.Password)
+		require.Equal(t, "filedb", cfg.DB.Name)
 
 		expectedDSN := "host=envdbhost user=fileuser password=envpass dbname=filedb port=5435 sslmode=disable"
-		assert.Equal(t, expectedDSN, cfg.DSN)
+		require.Equal(t, expectedDSN, cfg.DSN)
 	})
 	t.Run("TestLoadConfigInvalidFileReturnsError", func(t *testing.T) {
 		tmpFile, err := os.CreateTemp("", "config*.yaml")
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		defer os.Remove(tmpFile.Name())
 
 		_, err = tmpFile.WriteString("this is not valid yaml: [")
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		_ = tmpFile.Close()
 
 		cfg, err := LoadConfig(tmpFile.Name())
-		assert.Error(t, err)
-		assert.Nil(t, cfg)
+		require.Error(t, err)
+		require.Nil(t, cfg)
 	})
 	t.Run("TestLoadConfigEmptyFileUsesDefaults", func(t *testing.T) {
 		tmpFile, err := os.CreateTemp("", "config*.yaml")
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		defer os.Remove(tmpFile.Name())
 
 		_, err = tmpFile.WriteString("")
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		_ = tmpFile.Close()
 
 		cfg, err := LoadConfig(tmpFile.Name())
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
-		assert.Equal(t, "localhost", cfg.App.Host)
-		assert.Equal(t, 8080, cfg.App.Port)
-		assert.Equal(t, "localhost", cfg.DB.Host)
-		assert.Equal(t, "5432", cfg.DB.Port)
-		assert.Equal(t, "postgres", cfg.DB.User)
-		assert.Equal(t, "postgres", cfg.DB.Password)
-		assert.Equal(t, "url_shortener_db", cfg.DB.Name)
+		require.Equal(t, "localhost", cfg.App.Host)
+		require.Equal(t, 8080, cfg.App.Port)
+		require.Equal(t, "localhost", cfg.DB.Host)
+		require.Equal(t, "5432", cfg.DB.Port)
+		require.Equal(t, "postgres", cfg.DB.User)
+		require.Equal(t, "postgres", cfg.DB.Password)
+		require.Equal(t, "url_shortener_db", cfg.DB.Name)
 	})
 	t.Run("TestUpdateDSN", func(t *testing.T) {
 		cfg := &Config{}
@@ -191,6 +193,6 @@ db:
 		cfg.UpdateDSN()
 
 		expected := "host=testhost user=testuser password=testpass dbname=testdb port=1234 sslmode=disable"
-		assert.Equal(t, expected, cfg.DSN)
+		require.Equal(t, expected, cfg.DSN)
 	})
 }
