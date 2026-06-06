@@ -26,6 +26,8 @@ import (
 	_ "github.com/topinambur02/url-shortener/docs"
 
 	"github.com/rs/cors"
+
+	_ "net/http/pprof"
 )
 
 // @title           URL shortener (Test Task)
@@ -37,7 +39,7 @@ import (
 func main() {
 	logging.Init()
 	logger := logging.GetLogger()
-	
+
 	logger.Info("=== [START] URL Shortener Application Bootstrap ===")
 
 	if err := run(context.Background()); err != nil {
@@ -79,6 +81,9 @@ func run(ctx context.Context) error {
 		Addr:              address,
 		ReadHeaderTimeout: 10 * time.Second,
 		Handler:           handlerStack,
+		ReadTimeout:       5 * time.Second,
+		WriteTimeout:      10 * time.Second,
+		IdleTimeout:       120 * time.Second,
 	}
 
 	logger.Infof("Spawning background routine for HTTP server on %s...", address)
@@ -86,6 +91,10 @@ func run(ctx context.Context) error {
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Errorf("CRITICAL: HTTP server intercepted an error: %s", err)
 		}
+	}()
+
+	go func() {
+		http.ListenAndServe("localhost:6060", nil)
 	}()
 
 	logger.Info("Registering system signal listeners for Graceful Shutdown...")
