@@ -32,7 +32,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.CreateUrlDto"
+                            "$ref": "#/definitions/dto.CreateURLDto"
                         }
                     }
                 ],
@@ -40,7 +40,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.ShortUrlDto"
+                            "$ref": "#/definitions/dto.ShortURLDto"
                         }
                     },
                     "400": {
@@ -86,7 +86,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.OriginalUrlDto"
+                            "$ref": "#/definitions/dto.OriginalURLDto"
                         }
                     },
                     "400": {
@@ -112,7 +112,18 @@
         }
     },
     "definitions": {
-        "dto.CreateUrlDto": {
+        "dto.CreateURLDto": {
+            "type": "object",
+            "required": [
+                "original_url"
+            ],
+            "properties": {
+                "original_url": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.OriginalURLDto": {
             "type": "object",
             "properties": {
                 "original_url": {
@@ -120,15 +131,7 @@
                 }
             }
         },
-        "dto.OriginalUrlDto": {
-            "type": "object",
-            "properties": {
-                "original_url": {
-                    "type": "string"
-                }
-            }
-        },
-        "dto.ShortUrlDto": {
+        "dto.ShortURLDto": {
             "type": "object",
             "properties": {
                 "short_url": {

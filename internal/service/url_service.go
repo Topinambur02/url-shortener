@@ -9,48 +9,46 @@ import (
 	"github.com/topinambur02/url-shortener/pkg/utils"
 )
 
-//go:generate mockery --name UrlService --output ./mocks --case underscore
-type UrlService interface {
-	GetByShortUrl(ctx context.Context, shortUrl string) (*dto.OriginalUrlDto, error)
-	Create(ctx context.Context, createUrlDto *dto.CreateUrlDto) (*dto.ShortUrlDto, error)
+//go:generate mockery --name URLService --output ./mocks --case underscore
+type URLService interface {
+	GetByShortUrl(ctx context.Context, shortUrl string) (*dto.OriginalURLDto, error)
+	Create(ctx context.Context, createUrlDto *dto.CreateURLDto) (*dto.ShortURLDto, error)
 }
 
-type UrlServiceImpl struct {
-	urlRepo repository.UrlRepository
+type URLServiceImpl struct {
+	repo repository.StoreRepository
 }
 
-func NewUrlService(urlRepo repository.UrlRepository) *UrlServiceImpl {
-	return &UrlServiceImpl{
-		urlRepo: urlRepo,
+func NewUrlService(repo repository.StoreRepository) *URLServiceImpl {
+	return &URLServiceImpl{
+		repo: repo,
 	}
 }
 
-func (s *UrlServiceImpl) GetByShortUrl(ctx context.Context, shortUrl string) (*dto.OriginalUrlDto, error) {
-	url, err := s.urlRepo.GetByShortUrl(ctx, shortUrl)
+func (s *URLServiceImpl) GetByShortUrl(ctx context.Context, shortUrl string) (*dto.OriginalURLDto, error) {
+	url, err := s.repo.GetByShortUrl(ctx, shortUrl)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return &dto.OriginalUrlDto{OriginalUrl: url.OriginalUrl}, nil
+	return &dto.OriginalURLDto{OriginalURL: url.OriginalURL}, nil
 }
 
-func (s *UrlServiceImpl) Create(ctx context.Context, createUrlDto *dto.CreateUrlDto) (*dto.ShortUrlDto, error) {
-	originalUrl := createUrlDto.OriginalUrl
-	shortURL := utils.GenerateShortUrl(originalUrl)
-	url_hash := utils.HashURL(shortURL)
+func (s *URLServiceImpl) Create(ctx context.Context, createURLDto *dto.CreateURLDto) (*dto.ShortURLDto, error) {
+	originalURL := createURLDto.OriginalURL
+	shortURL := utils.GenerateShortUrl(originalURL)
 
-	url := model.Url{
-		OriginalUrl: originalUrl,
-		ShortUrl:    shortURL,
-		UrlHash:     url_hash,
+	url := model.URL{
+		OriginalURL: originalURL,
+		ShortURL:    shortURL,
 	}
 
-	createdUrl, err := s.urlRepo.Create(ctx, url)
+	createdURL, err := s.repo.Create(ctx, url)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return &dto.ShortUrlDto{ShortUrl: createdUrl.ShortUrl}, nil
+	return &dto.ShortURLDto{ShortURL: createdURL.ShortURL}, nil
 }

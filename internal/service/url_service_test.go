@@ -5,123 +5,128 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 
 	"github.com/topinambur02/url-shortener/internal/dto"
 	"github.com/topinambur02/url-shortener/internal/model"
 	"github.com/topinambur02/url-shortener/internal/repository/mocks"
 )
 
-func TestUrlService(t *testing.T) {
-	t.Run("TestUrlServiceImpl_GetByShortUrl", func(t *testing.T) {
-		tests := []struct {
-			name          string
-			shortUrl      string
-			mockSetup     func(mockRepo *mocks.UrlRepository)
-			expectedError error
-			expectedRes   *dto.OriginalUrlDto
-		}{
-			{
-				name:     "Success",
-				shortUrl: "abcd123",
-				mockSetup: func(mockRepo *mocks.UrlRepository) {
-					mockRepo.On("GetByShortUrl", mock.Anything, "abcd123").
-						Return(&model.Url{OriginalUrl: "https://example.com", ShortUrl: "abcd123"}, nil).
-						Once()
-				},
-				expectedError: nil,
-				expectedRes:   &dto.OriginalUrlDto{OriginalUrl: "https://example.com"},
+func TestUrlService_GetByShortUrl(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name          string
+		shortUrl      string
+		mockSetup     func(mockRepo *mocks.StoreRepository)
+		expectedError error
+		expectedRes   *dto.OriginalURLDto
+	}{
+		{
+			name:     "Success",
+			shortUrl: "abcd123",
+			mockSetup: func(mockRepo *mocks.StoreRepository) {
+				mockRepo.On("GetByShortUrl", mock.Anything, "abcd123").
+					Return(&model.URL{OriginalURL: "https://example.com", ShortURL: "abcd123"}, nil).
+					Once()
 			},
-			{
-				name:     "Error_NotFound",
-				shortUrl: "notfound",
-				mockSetup: func(mockRepo *mocks.UrlRepository) {
-					mockRepo.On("GetByShortUrl", mock.Anything, "notfound").
-						Return((*model.Url)(nil), errors.New("url not found")).
-						Once()
-				},
-				expectedError: errors.New("url not found"),
-				expectedRes:   nil,
+			expectedError: nil,
+			expectedRes:   &dto.OriginalURLDto{OriginalURL: "https://example.com"},
+		},
+		{
+			name:     "Error_NotFound",
+			shortUrl: "notfound",
+			mockSetup: func(mockRepo *mocks.StoreRepository) {
+				mockRepo.On("GetByShortUrl", mock.Anything, "notfound").
+					Return((*model.URL)(nil), errors.New("url not found")).
+					Once()
 			},
-		}
+			expectedError: errors.New("url not found"),
+			expectedRes:   nil,
+		},
+	}
 
-		for _, tt := range tests {
-			t.Run(tt.name, func(t *testing.T) {
-				mockRepo := mocks.NewUrlRepository(t)
-				tt.mockSetup(mockRepo)
-				service := NewUrlService(mockRepo)
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 
-				res, err := service.GetByShortUrl(context.Background(), tt.shortUrl)
+			mockRepo := mocks.NewStoreRepository(t)
+			tt.mockSetup(mockRepo)
+			service := NewUrlService(mockRepo)
 
-				if tt.expectedError != nil {
-					assert.Error(t, err)
-					assert.Equal(t, tt.expectedError.Error(), err.Error())
-					assert.Nil(t, res)
-				} else {
-					assert.NoError(t, err)
-					assert.Equal(t, tt.expectedRes, res)
-				}
-			})
-		}
-	})
-	t.Run("TestUrlServiceImpl_Create", func(t *testing.T) {
-		tests := []struct {
-			name          string
-			createDto     *dto.CreateUrlDto
-			mockSetup     func(mockRepo *mocks.UrlRepository)
-			expectedError error
-			expectedRes   *dto.ShortUrlDto
-		}{
-			{
-				name:      "Success",
-				createDto: &dto.CreateUrlDto{OriginalUrl: "https://example.com"},
-				mockSetup: func(mockRepo *mocks.UrlRepository) {
-					matcher := mock.MatchedBy(func(u model.Url) bool {
-						return u.OriginalUrl == "https://example.com" && u.ShortUrl != ""
-					})
+			res, err := service.GetByShortUrl(context.Background(), tt.shortUrl)
 
-					mockRepo.On("Create", mock.Anything, matcher).
-						Return(&model.Url{OriginalUrl: "https://example.com", ShortUrl: "genShort123"}, nil).
-						Once()
-				},
-				expectedError: nil,
-				expectedRes:   &dto.ShortUrlDto{ShortUrl: "genShort123"},
+			if tt.expectedError != nil {
+				require.Error(t, err)
+				require.EqualError(t, err, tt.expectedError.Error())
+				require.Nil(t, res)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.expectedRes, res)
+			}
+		})
+	}
+}
+
+func TestUrlService_Create(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name          string
+		createDto     *dto.CreateURLDto
+		mockSetup     func(mockRepo *mocks.StoreRepository)
+		expectedError error
+		expectedRes   *dto.ShortURLDto
+	}{
+		{
+			name:      "Success",
+			createDto: &dto.CreateURLDto{OriginalURL: "https://example.com"},
+			mockSetup: func(mockRepo *mocks.StoreRepository) {
+				matcher := mock.MatchedBy(func(u model.URL) bool {
+					return u.OriginalURL == "https://example.com"
+				})
+
+				mockRepo.On("Create", mock.Anything, matcher).
+					Return(&model.URL{OriginalURL: "https://example.com", ShortURL: "genShort123"}, nil).
+					Once()
 			},
-			{
-				name:      "Error_RepositoryFails",
-				createDto: &dto.CreateUrlDto{OriginalUrl: "https://broken.com"},
-				mockSetup: func(mockRepo *mocks.UrlRepository) {
-					matcher := mock.MatchedBy(func(u model.Url) bool {
-						return u.OriginalUrl == "https://broken.com"
-					})
-
-					mockRepo.On("Create", mock.Anything, matcher).
-						Return((*model.Url)(nil), errors.New("db error")).
-						Once()
-				},
-				expectedError: errors.New("db error"),
-				expectedRes:   nil,
+			expectedError: nil,
+			expectedRes:   &dto.ShortURLDto{ShortURL: "genShort123"},
+		},
+		{
+			name:      "Error_RepositoryFails",
+			createDto: &dto.CreateURLDto{OriginalURL: "https://broken.com"},
+			mockSetup: func(mockRepo *mocks.StoreRepository) {
+				mockRepo.On("Create", mock.Anything, mock.AnythingOfType("model.Url")).
+					Return((*model.URL)(nil), errors.New("db error")).
+					Once()
 			},
-		}
+			expectedError: errors.New("db error"),
+			expectedRes:   nil,
+		},
+	}
 
-		for _, tt := range tests {
-			t.Run(tt.name, func(t *testing.T) {
-				mockRepo := mocks.NewUrlRepository(t)
-				tt.mockSetup(mockRepo)
-				service := NewUrlService(mockRepo)
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 
-				res, err := service.Create(context.Background(), tt.createDto)
+			mockRepo := mocks.NewStoreRepository(t)
+			tt.mockSetup(mockRepo)
+			service := NewUrlService(mockRepo)
 
-				if tt.expectedError != nil {
-					assert.Error(t, err)
-					assert.Equal(t, tt.expectedError.Error(), err.Error())
-					assert.Nil(t, res)
-				} else {
-					assert.NoError(t, err)
-					assert.Equal(t, tt.expectedRes, res)
-				}
-			})
-		}
-	})
+			res, err := service.Create(context.Background(), tt.createDto)
+
+			if tt.expectedError != nil {
+				require.Error(t, err)
+				require.EqualError(t, err, tt.expectedError.Error())
+				require.Nil(t, res)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.expectedRes, res)
+			}
+		})
+	}
 }

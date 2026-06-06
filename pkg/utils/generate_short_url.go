@@ -1,21 +1,20 @@
 package utils
 
-import "hash/fnv"
+import (
+	"hash/fnv"
 
-const (
-	alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"
-	length   = 10
+	"github.com/topinambur02/url-shortener/pkg/constants"
 )
 
 func GenerateShortUrl(originalUrl string) string {
 	h := fnv.New64a()
 	h.Write([]byte(originalUrl))
 	hashValue := h.Sum64()
-	var result [length]byte
-	base := uint64(len(alphabet))
+	var result [constants.Length]byte
+	base := uint64(len(constants.Alphabet))
 
-	for i := range length {
-		result[i] = alphabet[hashValue%base]
+	for i := range constants.Length {
+		result[i] = constants.Alphabet[hashValue % base]
 		hashValue /= base
 	}
 

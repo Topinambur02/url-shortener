@@ -9,7 +9,6 @@ RUN go mod download
 
 COPY . .
 
-RUN touch .env
 RUN CGO_ENABLED=1 GOOS=linux go build -o app ./cmd/app
 RUN CGO_ENABLED=1 GOOS=linux go build -o migrate ./cmd/migrate
 

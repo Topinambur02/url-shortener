@@ -1,5 +1,5 @@
 package dto
 
-type CreateUrlDto struct {
-	OriginalUrl string `json:"original_url" validate:"required,url"`
+type CreateURLDto struct {
+	OriginalURL string `json:"original_url" validate:"required,url"`
 }

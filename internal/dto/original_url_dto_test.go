@@ -3,59 +3,37 @@ package dto
 import (
 	"encoding/json"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
-func TestOriginalUrlDto(t *testing.T) {
-	t.Run("TestOriginalUrlDto_Unmarshal", func(t *testing.T) {
+func TestOriginalURLDto(t *testing.T) {
+	t.Run("Unmarshal", func(t *testing.T) {
 		tests := []struct {
 			name      string
 			inputJSON string
 			expected  string
 		}{
-			{
-				name:      "Valid JSON",
-				inputJSON: `{"original_url":"https://example.com"}`,
-				expected:  "https://example.com",
-			},
-			{
-				name:      "Empty string value",
-				inputJSON: `{"original_url":""}`,
-				expected:  "",
-			},
-			{
-				name:      "Missing field in JSON",
-				inputJSON: `{}`,
-				expected:  "",
-			},
+			{"Valid JSON", `{"original_url":"https://example.com"}`, "https://example.com"},
+			{"Empty string value", `{"original_url":""}`, ""},
+			{"Missing field in JSON", `{}`, ""},
 		}
-
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				var dto OriginalUrlDto
+				var dto OriginalURLDto
 				err := json.Unmarshal([]byte(tt.inputJSON), &dto)
-				if err != nil {
-					t.Fatalf("failed to unmarshal JSON: %v", err)
-				}
-
-				if dto.OriginalUrl != tt.expected {
-					t.Errorf("got %q, want %q", dto.OriginalUrl, tt.expected)
-				}
+				require.NoError(t, err, "Unmarshal should not throw an error")
+				require.Equal(t, tt.expected, dto.OriginalURL, "The OriginalUrl field must match")
 			})
 		}
 	})
-	t.Run("TestOriginalUrlDto_Marshal", func(t *testing.T) {
-		dto := OriginalUrlDto{
-			OriginalUrl: "https://example.com",
-		}
+
+	t.Run("Marshal", func(t *testing.T) {
+		dto := OriginalURLDto{OriginalURL: "https://example.com"}
 		expectedJSON := `{"original_url":"https://example.com"}`
 
 		bytes, err := json.Marshal(dto)
-		if err != nil {
-			t.Fatalf("failed to marshal struct: %v", err)
-		}
-
-		if string(bytes) != expectedJSON {
-			t.Errorf("got %s, want %s", string(bytes), expectedJSON)
-		}
+		require.NoError(t, err, "Marshal should not throw an error")
+		require.JSONEq(t, expectedJSON, string(bytes), "JSON must match")
 	})
 }

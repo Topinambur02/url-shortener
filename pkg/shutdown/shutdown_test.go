@@ -9,43 +9,48 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/topinambur02/url-shortener/pkg/logging"
+	"github.com/topinambur02/url-shortener/pkg/shutdown/mocks"
 )
-
-type mockCloser struct {
-	closeCount int
-	err        error
-}
-
-func (m *mockCloser) Close() error {
-	m.closeCount++
-	return m.err
-}
 
 func TestMain(m *testing.M) {
 	logging.Init()
 	exitCode := m.Run()
 
-	err := os.RemoveAll("logs")
-	if err != nil {
+	if err := os.RemoveAll("logs"); err != nil {
 		fmt.Printf("Error deleting logs folder: %v\n", err)
 	}
 
 	os.Exit(exitCode)
 }
 
-func TestShutdown(t *testing.T) {
-	t.Run("TestGracefulShutdownNormal", func(t *testing.T) {
+func TestGracefulShutdown(t *testing.T) {
+	triggerAndAwait := func(t *testing.T, done chan struct{}, sig syscall.Signal) {
+		t.Helper()
+		
+		time.Sleep(50 * time.Millisecond)
+		
+		err := syscall.Kill(syscall.Getpid(), sig)
+		require.NoError(t, err, "failed to send signal")
+
+		select {
+		case <-done:
+		case <-time.After(2 * time.Second):
+			require.FailNow(t, "GracefulShutdown did not complete within timeout")
+		}
+	}
+
+	t.Run("normal execution", func(t *testing.T) {
 		var shutdownCalled bool
 		sh := func(ctx context.Context) error {
 			shutdownCalled = true
 			return nil
 		}
 
-		closer1 := &mockCloser{}
-		closer2 := &mockCloser{}
-
+		closer1 := &mocks.MockCloser{}
+		closer2 := &mocks.MockCloser{}
 		signals := []os.Signal{syscall.SIGUSR1}
 
 		done := make(chan struct{})
@@ -54,27 +59,20 @@ func TestShutdown(t *testing.T) {
 			close(done)
 		}()
 
-		time.Sleep(50 * time.Millisecond)
-		err := syscall.Kill(syscall.Getpid(), syscall.SIGUSR1)
-		assert.NoError(t, err)
+		triggerAndAwait(t, done, syscall.SIGUSR1)
 
-		select {
-		case <-done:
-		case <-time.After(2 * time.Second):
-			t.Fatal("GracefulShutdown did not complete within timeout")
-		}
-
-		assert.True(t, shutdownCalled, "shutdown function was not called")
-		assert.Equal(t, 1, closer1.closeCount, "closer1 not closed")
-		assert.Equal(t, 1, closer2.closeCount, "closer2 not closed")
+		require.True(t, shutdownCalled, "shutdown function was not called")
+		require.Equal(t, 1, closer1.CloseCount, "closer1 not closed")
+		require.Equal(t, 1, closer2.CloseCount, "closer2 not closed")
 	})
-	t.Run("TestGracefulShutdownShutdownError", func(t *testing.T) {
+
+	t.Run("shutdown error", func(t *testing.T) {
 		shutdownErr := errors.New("shutdown failed")
 		sh := func(ctx context.Context) error {
 			return shutdownErr
 		}
 
-		closer := &mockCloser{}
+		closer := &mocks.MockCloser{}
 		signals := []os.Signal{syscall.SIGUSR1}
 
 		done := make(chan struct{})
@@ -83,51 +81,37 @@ func TestShutdown(t *testing.T) {
 			close(done)
 		}()
 
-		time.Sleep(50 * time.Millisecond)
-		err := syscall.Kill(syscall.Getpid(), syscall.SIGUSR1)
-		assert.NoError(t, err)
+		triggerAndAwait(t, done, syscall.SIGUSR1)
 
-		select {
-		case <-done:
-		case <-time.After(2 * time.Second):
-			t.Fatal("GracefulShutdown did not complete")
-		}
-
-		assert.Equal(t, 0, closer.closeCount, "closer should be closed even if shutdown returns error")
+		require.Equal(t, 0, closer.CloseCount, "closer should NOT be closed if shutdown returns error")
 	})
-	t.Run("TestGracefulShutdownCloserError", func(t *testing.T) {
-		sh := func(ctx context.Context) error { return nil }
-		goodCloser := &mockCloser{}
-		badCloser := &mockCloser{err: errors.New("close error")}
-		signals := []os.Signal{syscall.SIGUSR1}
-		done := make(chan struct{})
 
+	t.Run("closer error", func(t *testing.T) {
+		sh := func(ctx context.Context) error { return nil }
+		goodCloser := &mocks.MockCloser{}
+		badCloser := &mocks.MockCloser{Err: errors.New("close error")}
+		signals := []os.Signal{syscall.SIGUSR1}
+		
+		done := make(chan struct{})
 		go func() {
 			GracefulShutdown(signals, sh, goodCloser, badCloser)
 			close(done)
 		}()
 
-		time.Sleep(50 * time.Millisecond)
-		err := syscall.Kill(syscall.Getpid(), syscall.SIGUSR1)
-		assert.NoError(t, err)
+		triggerAndAwait(t, done, syscall.SIGUSR1)
 
-		select {
-		case <-done:
-		case <-time.After(2 * time.Second):
-			t.Fatal("GracefulShutdown did not complete")
-		}
-
-		assert.Equal(t, 1, goodCloser.closeCount, "good closer should be closed")
-		assert.Equal(t, 1, badCloser.closeCount, "bad closer should still be closed")
+		require.Equal(t, 1, goodCloser.CloseCount, "good closer should be closed")
+		require.Equal(t, 1, badCloser.CloseCount, "bad closer should still be closed despite error")
 	})
-	t.Run("TestGracefulShutdownMultipleSignals", func(t *testing.T) {
+
+	t.Run("multiple signals", func(t *testing.T) {
 		var shutdownCalled bool
 		sh := func(ctx context.Context) error {
 			shutdownCalled = true
 			return nil
 		}
 
-		closer := &mockCloser{}
+		closer := &mocks.MockCloser{}
 		signals := []os.Signal{syscall.SIGUSR1, syscall.SIGUSR2}
 
 		done := make(chan struct{})
@@ -136,17 +120,9 @@ func TestShutdown(t *testing.T) {
 			close(done)
 		}()
 
-		time.Sleep(50 * time.Millisecond)
-		err := syscall.Kill(syscall.Getpid(), syscall.SIGUSR2)
-		assert.NoError(t, err)
+		triggerAndAwait(t, done, syscall.SIGUSR2)
 
-		select {
-		case <-done:
-		case <-time.After(2 * time.Second):
-			t.Fatal("GracefulShutdown did not complete")
-		}
-
-		assert.True(t, shutdownCalled)
-		assert.Equal(t, 1, closer.closeCount)
+		require.True(t, shutdownCalled, "shutdown function was not called")
+		require.Equal(t, 1, closer.CloseCount, "closer not closed")
 	})
 }

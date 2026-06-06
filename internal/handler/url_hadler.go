@@ -14,10 +14,10 @@ import (
 var validate = validator.New()
 
 type URLHandler struct {
-	s service.UrlService
+	s service.URLService
 }
 
-func NewURLHandler(s service.UrlService) *URLHandler {
+func NewURLHandler(s service.URLService) *URLHandler {
 	return &URLHandler{s: s}
 }
 
@@ -28,12 +28,12 @@ func NewURLHandler(s service.UrlService) *URLHandler {
 // @Accept       json
 // @Produce      json
 // @Param        short   path      string  true  "Короткий код (10 символов)" minlength(10) maxlength(10)
-// @Success      200     {object}  dto.OriginalUrlDto
+// @Success      200     {object}  dto.OriginalURLDto
 // @Failure      400     {string}  string  "invalid short url length"
 // @Failure      404     {string}  string  "not found"
 // @Failure      500     {string}  string  "internal error"
 // @Router       /{short} [get]
-func (h *URLHandler) GetByShortUrl(w http.ResponseWriter, r *http.Request) {
+func (h *URLHandler) GetByShortURL(w http.ResponseWriter, r *http.Request) {
 	logger := logging.GetLogger()
 	shortURL := r.PathValue("short")
 
@@ -69,14 +69,14 @@ func (h *URLHandler) GetByShortUrl(w http.ResponseWriter, r *http.Request) {
 // @Tags         urls
 // @Accept       json
 // @Produce      json
-// @Param        request body      dto.CreateUrlDto  true  "Данные для создания ссылки"
-// @Success      200     {object}  dto.ShortUrlDto
+// @Param        request body      dto.CreateURLDto  true  "Данные для создания ссылки"
+// @Success      200     {object}  dto.ShortURLDto
 // @Failure      400     {string}  string  "invalid request"
 // @Failure      500     {string}  string  "internal error"
 // @Router       / [post]
 func (h *URLHandler) Create(w http.ResponseWriter, r *http.Request) {
 	logger := logging.GetLogger()
-	var createUrlDto dto.CreateUrlDto
+	var createUrlDto dto.CreateURLDto
 
 	if err := json.NewDecoder(r.Body).Decode(&createUrlDto); err != nil {
 		logger.Infof("Error decoding request body: %v", err)
@@ -92,7 +92,7 @@ func (h *URLHandler) Create(w http.ResponseWriter, r *http.Request) {
 	shortUrlDto, err := h.s.Create(r.Context(), &createUrlDto)
 
 	if err != nil {
-		logger.Infof("Internal error while creating short link for %s: %v", createUrlDto.OriginalUrl, err)
+		logger.Infof("Internal error while creating short link for %s: %v", createUrlDto.OriginalURL, err)
 		exceptions.RespondWithError(w, http.StatusInternalServerError, "internal error")
 		return
 	}

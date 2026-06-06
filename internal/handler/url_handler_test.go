@@ -3,33 +3,29 @@ package handler
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	"github.com/topinambur02/url-shortener/internal/dto"
 	"github.com/topinambur02/url-shortener/internal/service/mocks"
 	"github.com/topinambur02/url-shortener/pkg/exceptions"
 	"github.com/topinambur02/url-shortener/pkg/logging"
 )
 
-func TestMain(m *testing.M) {
+func setupLogging(t *testing.T) {
 	logging.Init()
-	exitCode := m.Run()
 
-	err := os.RemoveAll("logs")
-	if err != nil {
-		fmt.Printf("Log error when deleting folders: %v\n", err)
-	}
-
-	os.Exit(exitCode)
+	t.Cleanup(func() {
+		os.RemoveAll("logs")
+	})
 }
 
 func TestUrlHandler(t *testing.T) {
+	setupLogging(t)
 	t.Run("TestURLHandler_GetByShortUrl", func(t *testing.T) {
 		tests := []struct {
 			name           string
@@ -50,7 +46,7 @@ func TestUrlHandler(t *testing.T) {
 				shortURL: "1234567890",
 				mockBehavior: func(m *mocks.UrlService) {
 					m.On("GetByShortUrl", mock.Anything, "1234567890").
-						Return((*dto.OriginalUrlDto)(nil), exceptions.ErrNotFound)
+						Return((*dto.OriginalURLDto)(nil), exceptions.ErrNotFound)
 				},
 				expectedStatus: http.StatusNotFound,
 				expectedBody:   "{\"status_code\":404,\"message\":\"not found\"}\n",
@@ -60,7 +56,7 @@ func TestUrlHandler(t *testing.T) {
 				shortURL: "1234567890",
 				mockBehavior: func(m *mocks.UrlService) {
 					m.On("GetByShortUrl", mock.Anything, "1234567890").
-						Return((*dto.OriginalUrlDto)(nil), errors.New("db connection failure"))
+						Return((*dto.OriginalURLDto)(nil), errors.New("db connection failure"))
 				},
 				expectedStatus: http.StatusInternalServerError,
 				expectedBody:   "{\"status_code\":500,\"message\":\"internal error\"}\n",
@@ -70,7 +66,7 @@ func TestUrlHandler(t *testing.T) {
 				shortURL: "1234567890",
 				mockBehavior: func(m *mocks.UrlService) {
 					m.On("GetByShortUrl", mock.Anything, "1234567890").
-						Return(&dto.OriginalUrlDto{OriginalUrl: "https://example.com"}, nil)
+						Return(&dto.OriginalURLDto{OriginalURL: "https://example.com"}, nil)
 				},
 				expectedStatus: http.StatusOK,
 				expectedBody:   `{"original_url":"https://example.com"}`,
@@ -87,20 +83,14 @@ func TestUrlHandler(t *testing.T) {
 				req.SetPathValue("short", tt.shortURL)
 
 				rr := httptest.NewRecorder()
-				h.GetByShortUrl(rr, req)
+				h.GetByShortURL(rr, req)
 
-				if rr.Code != tt.expectedStatus {
-					t.Errorf("expected status %d, received %d", tt.expectedStatus, rr.Code)
-				}
+				require.Equal(t, tt.expectedStatus, rr.Code)
 
 				if tt.expectedStatus == http.StatusOK {
-					if !strings.Contains(rr.Body.String(), "https://example.com") {
-						t.Errorf("A valid JSON response was expected, received: %q", rr.Body.String())
-					}
+					require.Contains(t, rr.Body.String(), "https://example.com")
 				} else {
-					if rr.Body.String() != tt.expectedBody {
-						t.Errorf("expected body %q, received %q", tt.expectedBody, rr.Body.String())
-					}
+					require.Equal(t, tt.expectedBody, rr.Body.String())
 				}
 			})
 		}
@@ -120,9 +110,7 @@ func TestUrlHandler(t *testing.T) {
 				mockBehavior:   func(m *mocks.UrlService) {},
 				expectedStatus: http.StatusBadRequest,
 				checkBody: func(t *testing.T, body string) {
-					if !strings.Contains(body, "invalid request") {
-						t.Errorf("expected text 'invalid request', received %q", body)
-					}
+					require.Contains(t, body, "invalid request")
 				},
 			},
 			{
@@ -131,37 +119,31 @@ func TestUrlHandler(t *testing.T) {
 				mockBehavior:   func(m *mocks.UrlService) {},
 				expectedStatus: http.StatusBadRequest,
 				checkBody: func(t *testing.T, body string) {
-					if !strings.Contains(body, "Validation failed") {
-						t.Errorf("expected text 'Validation failed', received %q", body)
-					}
+					require.Contains(t, body, "Validation failed")
 				},
 			},
 			{
 				name:    "Internal error creating link",
 				reqBody: `{"original_url": "https://example.com"}`,
 				mockBehavior: func(m *mocks.UrlService) {
-					m.On("Create", mock.Anything, &dto.CreateUrlDto{OriginalUrl: "https://example.com"}).
-						Return((*dto.ShortUrlDto)(nil), errors.New("failed to insert"))
+					m.On("Create", mock.Anything, &dto.CreateURLDto{OriginalURL: "https://example.com"}).
+						Return((*dto.ShortURLDto)(nil), errors.New("failed to insert"))
 				},
 				expectedStatus: http.StatusInternalServerError,
 				checkBody: func(t *testing.T, body string) {
-					if !strings.Contains(body, "internal error") {
-						t.Errorf("expected text 'internal error', received %q", body)
-					}
+					require.Contains(t, body, "internal error")
 				},
 			},
 			{
 				name:    "Successful creation of a short link",
 				reqBody: `{"original_url": "https://example.com"}`,
 				mockBehavior: func(m *mocks.UrlService) {
-					m.On("Create", mock.Anything, &dto.CreateUrlDto{OriginalUrl: "https://example.com"}).
-						Return(&dto.ShortUrlDto{ShortUrl: "1234567890"}, nil)
+					m.On("Create", mock.Anything, &dto.CreateURLDto{OriginalURL: "https://example.com"}).
+						Return(&dto.ShortURLDto{ShortURL: "1234567890"}, nil)
 				},
 				expectedStatus: http.StatusOK,
 				checkBody: func(t *testing.T, body string) {
-					if !strings.Contains(body, "1234567890") {
-						t.Errorf("expected short URL in response, received %q", body)
-					}
+					require.Contains(t, body, "1234567890")
 				},
 			},
 		}
@@ -178,10 +160,7 @@ func TestUrlHandler(t *testing.T) {
 				rr := httptest.NewRecorder()
 				h.Create(rr, req)
 
-				if rr.Code != tt.expectedStatus {
-					t.Errorf("expected status %d, received %d", tt.expectedStatus, rr.Code)
-				}
-
+				require.Equal(t, tt.expectedStatus, rr.Code)
 				tt.checkBody(t, rr.Body.String())
 			})
 		}

@@ -1,8 +1,7 @@
 package model
 
-type Url struct {
+type URL struct {
 	ID          uint   `json:"id"`
-	OriginalUrl string `json:"original_url"`
-	UrlHash     string `json:"url_hash"`
-	ShortUrl    string `json:"short_url"`
+	OriginalURL string `json:"original_url"`
+	ShortURL    string `json:"short_url"`
 }
