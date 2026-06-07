@@ -9,9 +9,10 @@ import (
 
 type Config struct {
 	App struct {
-		Host        string `env:"HOST" env-default:"localhost" yaml:"host"`
-		Port        int    `env:"PORT" env-default:"8080" yaml:"port"`
-		StorageType string `env:"STORAGE_TYPE" env-default:"inmemory" yaml:"storage_type"`
+		Host           string   `env:"HOST" env-default:"localhost" yaml:"host"`
+		Port           int      `env:"PORT" env-default:"8080" yaml:"port"`
+		StorageType    string   `env:"STORAGE_TYPE" env-default:"inmemory" yaml:"storage_type"`
+		AllowedOrigins []string `env:"ALLOWED_ORIGINS" env-default:"*" yaml:"allowed_origins"`
 	} `yaml:"app"`
 
 	DB struct {
