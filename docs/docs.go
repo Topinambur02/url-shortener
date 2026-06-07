@@ -15,7 +15,7 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/": {
+        "/api": {
             "post": {
                 "description": "Принимает оригинальный URL в теле запроса и генерирует для него короткий код.",
                 "consumes": [
@@ -67,7 +67,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/{short}": {
+        "/api/{short}": {
             "get": {
                 "description": "Возвращает оригинальный URL по его 10-символьному короткому коду.",
                 "consumes": [
@@ -96,6 +96,58 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/dto.OriginalURLDto"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/exceptions.ErrBadRequestResponseDoc"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/exceptions.ErrNotFoundResponseDoc"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/exceptions.ErrInternalResponseDoc"
+                        }
+                    }
+                }
+            }
+        },
+        "/{short}": {
+            "get": {
+                "description": "Делает редирект на оригинальный URL по его 10-символьному короткому коду.",
+                "tags": [
+                    "urls"
+                ],
+                "summary": "Редиректит на оригинальный URL",
+                "parameters": [
+                    {
+                        "maxLength": 10,
+                        "minLength": 10,
+                        "type": "string",
+                        "description": "Короткий код (10 символов)",
+                        "name": "short",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "307": {
+                        "description": "Временное перенаправление на оригинальный URL",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "headers": {
+                            "Location": {
+                                "type": "string",
+                                "description": "Ссылка на оригинальный сайт"
+                            }
                         }
                     },
                     "400": {
@@ -208,7 +260,7 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0.0",
 	Host:             "localhost:8080",
-	BasePath:         "/api",
+	BasePath:         "/",
 	Schemes:          []string{"http"},
 	Title:            "URL shortener (Test Task)",
 	Description:      "Сервис сокращения ссылок",

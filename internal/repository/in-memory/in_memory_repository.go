@@ -2,7 +2,6 @@ package inmemory
 
 import (
 	"context"
-	"fmt"
 	"sync"
 
 	"github.com/topinambur02/url-shortener/internal/config"
@@ -31,9 +30,9 @@ func NewInMemoryRepository() *InMemoryRepository {
 func (r *InMemoryRepository) GetByShortURL(ctx context.Context, shortURL string) (*model.URL, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	fmt.Println(r.data)
+
 	url, exists := r.data[shortURL]
-	fmt.Println(r.data)
+
 	if !exists {
 		return nil, exceptions.ErrNotFound
 	}

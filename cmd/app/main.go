@@ -34,7 +34,7 @@ import (
 // @version         1.0.0
 // @description     Сервис сокращения ссылок
 // @host            localhost:8080
-// @BasePath        /api
+// @BasePath        /
 // @schemes         http
 func main() {
 	logging.Init()
@@ -111,7 +111,8 @@ func setupRouter(h *handler.URLHandler, cfg *config.Config) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /api", h.Create)
 	mux.HandleFunc("POST /api/{$}", h.Create)
-	mux.HandleFunc("GET /{short}", h.GetByShortURL)
+	mux.HandleFunc("GET /{short}", h.RedirectToOriginal)
+	mux.HandleFunc("GET /api/{short}", h.GetByShortURL)
 	mux.Handle("/docs/", httpSwagger.WrapHandler)
 	logger.Info("HTTP routes registered: POST /api, GET /{short}, GET /docs/")
 
