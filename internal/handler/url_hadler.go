@@ -34,7 +34,7 @@ func NewURLHandler(s service.URLService, address string) *URLHandler {
 // @Failure      400     {object}  exceptions.ErrBadRequestResponseDoc
 // @Failure      404     {object}  exceptions.ErrNotFoundResponseDoc
 // @Failure      500     {object}  exceptions.ErrInternalResponseDoc
-// @Router       /{short} [get]
+// @Router       /api/{short} [get]
 func (h *URLHandler) GetByShortURL(w http.ResponseWriter, r *http.Request) {
 	logger := logging.GetLogger()
 	shortURL := r.PathValue("short")
@@ -53,7 +53,7 @@ func (h *URLHandler) GetByShortURL(w http.ResponseWriter, r *http.Request) {
 			exceptions.RespondWithError(w, http.StatusNotFound, "not found")
 			return
 		}
-		
+
 		logger.Infof("Internal error while searching %s: %v", shortURL, err)
 		exceptions.RespondWithError(w, http.StatusInternalServerError, "internal error")
 		return
@@ -66,6 +66,44 @@ func (h *URLHandler) GetByShortURL(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// RedirectToOriginal godoc
+// @Summary      Редиректит на оригинальный URL
+// @Description  Делает редирект на оригинальный URL по его 10-символьному короткому коду.
+// @Tags         urls
+// @Param        short   path      string  true  "Короткий код (10 символов)" minlength(10) maxlength(10)
+// @Success      307     {object}  nil     "Успешное перенаправление"
+// @Header       307     {string}  Location "Ссылка на оригинальный сайт"
+// @Failure      400     {object}  exceptions.ErrBadRequestResponseDoc
+// @Failure      404     {object}  exceptions.ErrNotFoundResponseDoc
+// @Failure      500     {object}  exceptions.ErrInternalResponseDoc
+// @Router       /{short} [get]
+func (h *URLHandler) RedirectToOriginal(w http.ResponseWriter, r *http.Request) {
+	logger := logging.GetLogger()
+	shortURL := r.PathValue("short")
+
+	if len(shortURL) != 10 {
+		logger.Infof("Error: Invalid shortURL length (%d characters): %s", len(shortURL), shortURL)
+		exceptions.RespondWithError(w, http.StatusBadRequest, "invalid short url length")
+		return
+	}
+
+	originalUrlDto, err := h.s.GetByShortURL(r.Context(), shortURL)
+
+	if err != nil {
+		if err == exceptions.ErrNotFound {
+			logger.Infof("URL not found in database: %s", shortURL)
+			exceptions.RespondWithError(w, http.StatusNotFound, "not found")
+			return
+		}
+
+		logger.Infof("Internal error while searching %s: %v", shortURL, err)
+		exceptions.RespondWithError(w, http.StatusInternalServerError, "internal error")
+		return
+	}
+
+	http.Redirect(w, r, originalUrlDto.OriginalURL, http.StatusTemporaryRedirect)
+}
+
 // Create godoc
 // @Summary      Создать короткую ссылку
 // @Description  Принимает оригинальный URL в теле запроса и генерирует для него короткий код.
@@ -75,9 +113,9 @@ func (h *URLHandler) GetByShortURL(w http.ResponseWriter, r *http.Request) {
 // @Param        request body      dto.CreateURLDto  true  "Данные для создания ссылки"
 // @Success      201     {object}  dto.ShortURLDto
 // @Failure      400     {object}  exceptions.ErrBadRequestResponseDoc
-// @Failure		 409	 {object}  exceptions.ErrConflictResponseDoc
+// @Failure      409     {object}  exceptions.ErrConflictResponseDoc
 // @Failure      500     {object}  exceptions.ErrInternalResponseDoc
-// @Router       / [post]
+// @Router       /api [post]
 func (h *URLHandler) Create(w http.ResponseWriter, r *http.Request) {
 	logger := logging.GetLogger()
 	var createUrlDto dto.CreateURLDto
@@ -96,16 +134,16 @@ func (h *URLHandler) Create(w http.ResponseWriter, r *http.Request) {
 	shortUrlDto, err := h.s.Create(r.Context(), &createUrlDto, h.address)
 
 	if err != nil {
-        if errors.Is(err, exceptions.ErrConflict) {
-            logger.Warnf("Conflict: URL already shortened: %s", createUrlDto.OriginalURL)
-            exceptions.RespondWithError(w, http.StatusConflict, "url already exists")
-            return
-        }
+		if errors.Is(err, exceptions.ErrConflict) {
+			logger.Warnf("Conflict: URL already shortened: %s", createUrlDto.OriginalURL)
+			exceptions.RespondWithError(w, http.StatusConflict, "url already exists")
+			return
+		}
 
-        logger.Errorf("Internal error while creating short link for %s: %v", createUrlDto.OriginalURL, err)
-        exceptions.RespondWithError(w, http.StatusInternalServerError, "internal error")
-        return
-    }
+		logger.Errorf("Internal error while creating short link for %s: %v", createUrlDto.OriginalURL, err)
+		exceptions.RespondWithError(w, http.StatusInternalServerError, "internal error")
+		return
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
