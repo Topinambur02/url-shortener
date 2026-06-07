@@ -75,7 +75,7 @@ func run(ctx context.Context) error {
 	s := service.NewURLService(repo)
 	h := handler.NewURLHandler(s, address)
 
-	handlerStack := setupRouter(h)
+	handlerStack := setupRouter(h, cfg)
 
 	server := &http.Server{
 		Addr:              address,
@@ -104,7 +104,7 @@ func run(ctx context.Context) error {
 	)
 }
 
-func setupRouter(h *handler.URLHandler) http.Handler {
+func setupRouter(h *handler.URLHandler, cfg *config.Config) http.Handler {
 	logger := logging.GetLogger()
 	logger.Info("Configuring HTTP ServeMux and registering API endpoints...")
 
@@ -117,7 +117,7 @@ func setupRouter(h *handler.URLHandler) http.Handler {
 
 	logger.Info("Applying Cross-Origin Resource Sharing (CORS) rules...")
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"*"},
+		AllowedOrigins:   cfg.App.AllowedOrigins,
 		AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodOptions},
 		AllowedHeaders:   []string{"Content-Type", "Authorization"},
 		AllowCredentials: true,
