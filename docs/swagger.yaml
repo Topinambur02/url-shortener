@@ -1,0 +1,172 @@
+basePath: /
+definitions:
+  dto.CreateURLDto:
+    properties:
+      original_url:
+        example: https://finance.ozon.ru
+        type: string
+    required:
+    - original_url
+    type: object
+  dto.OriginalURLDto:
+    properties:
+      original_url:
+        type: string
+    type: object
+  dto.ShortURLDto:
+    properties:
+      short_url:
+        type: string
+    type: object
+  exceptions.ErrBadRequestResponseDoc:
+    properties:
+      message:
+        example: invalid request
+        type: string
+      status_code:
+        example: 400
+        type: integer
+    type: object
+  exceptions.ErrConflictResponseDoc:
+    properties:
+      message:
+        example: url already exists
+        type: string
+      status_code:
+        example: 409
+        type: integer
+    type: object
+  exceptions.ErrInternalResponseDoc:
+    properties:
+      message:
+        example: internal error
+        type: string
+      status_code:
+        example: 500
+        type: integer
+    type: object
+  exceptions.ErrNotFoundResponseDoc:
+    properties:
+      message:
+        example: url not found
+        type: string
+      status_code:
+        example: 404
+        type: integer
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: Сервис сокращения ссылок
+  title: URL shortener (Test Task)
+  version: 1.0.0
+paths:
+  /{short}:
+    get:
+      description: Делает редирект на оригинальный URL по его 10-символьному короткому
+        коду.
+      parameters:
+      - description: Короткий код (10 символов)
+        in: path
+        maxLength: 10
+        minLength: 10
+        name: short
+        required: true
+        type: string
+      responses:
+        "307":
+          description: Временное перенаправление на оригинальный URL
+          headers:
+            Location:
+              description: Ссылка на оригинальный сайт
+              type: string
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/exceptions.ErrBadRequestResponseDoc'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/exceptions.ErrNotFoundResponseDoc'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/exceptions.ErrInternalResponseDoc'
+      summary: Редиректит на оригинальный URL
+      tags:
+      - urls
+  /api:
+    post:
+      consumes:
+      - application/json
+      description: Принимает оригинальный URL в теле запроса и генерирует для него
+        короткий код.
+      parameters:
+      - description: Данные для создания ссылки
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateURLDto'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.ShortURLDto'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/exceptions.ErrBadRequestResponseDoc'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/exceptions.ErrConflictResponseDoc'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/exceptions.ErrInternalResponseDoc'
+      summary: Создать короткую ссылку
+      tags:
+      - urls
+  /api/{short}:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает оригинальный URL по его 10-символьному короткому коду.
+      parameters:
+      - description: Короткий код (10 символов)
+        in: path
+        maxLength: 10
+        minLength: 10
+        name: short
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.OriginalURLDto'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/exceptions.ErrBadRequestResponseDoc'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/exceptions.ErrNotFoundResponseDoc'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/exceptions.ErrInternalResponseDoc'
+      summary: Получить оригинальный URL
+      tags:
+      - urls
+schemes:
+- http
+swagger: "2.0"

@@ -1,0 +1,6 @@
+.gitignore
+.git
+.github
+.DS_Store
+logs/
+*.md
